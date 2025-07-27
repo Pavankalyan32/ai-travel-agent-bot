@@ -387,6 +387,32 @@
       .realtime-data { gap: 8px; }
       .data-card { min-width: 100px; }
     }
+    
+    /* Performance optimizations */
+    * {
+      box-sizing: border-box;
+    }
+    
+    .conversation-item {
+      will-change: transform;
+      transform: translateZ(0);
+    }
+    
+    .ask-mic-btn {
+      will-change: transform;
+      transform: translateZ(0);
+    }
+    
+    /* Reduce animation complexity for better performance */
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 #a78bfa55; }
+      100% { box-shadow: 0 0 0 20px #a78bfa11; }
+    }
+    
+    @keyframes recording-pulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.05); }
+    }
   </style>
 </head>
 <body>
@@ -569,61 +595,22 @@
       return cleaned.trim();
     }
 
-    // Text cleaning and shortening function
+    // Fast text cleaning function
     function cleanAndShortenText(text) {
       if (!text) return '';
       
-      // Remove extra whitespace and normalize
+      // Quick cleanup
       let cleaned = text.replace(/\s+/g, ' ').trim();
-      
-      // Remove emojis and special symbols but preserve international characters
       cleaned = cleaned.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
-      
-      // Remove common AI artifacts and formal language
-      cleaned = cleaned.replace(/^(Here's|Here is|I'll|I will|Let me|Based on|According to|I can|I would|I'd)/gi, '');
-      cleaned = cleaned.replace(/(\.|,|!|\?)\s*(Here's|Here is|I'll|I will|Let me|Based on|According to|I can|I would|I'd)/gi, '$1');
-      
-      // Remove redundant phrases
-      cleaned = cleaned.replace(/\b(please note that|it's worth noting that|it's important to|keep in mind that|remember that)\b/gi, '');
-      cleaned = cleaned.replace(/\b(in terms of|when it comes to|as far as|regarding|concerning)\b/gi, '');
-      
-      // Remove bullet points and list markers
       cleaned = cleaned.replace(/^[\s•\-\*]+/gm, '');
-      cleaned = cleaned.replace(/^\d+\.\s*/gm, '');
       
-      // Shorten long sentences by breaking at natural points
-      const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0);
-      const shortSentences = sentences.map(sentence => {
-        let short = sentence.trim();
-        
-        // Allow longer sentences for detailed responses
-        if (short.length > 150) {
-          const parts = short.split(/[,;]/);
-          if (parts.length > 1) {
-            short = parts[0].trim();
-          }
-        }
-        
-        // Keep all content for maximum detail
-        // Only remove the most redundant words
-        short = short.replace(/\b(very|really|quite|extremely|absolutely)\b/gi, '');
-        
-        return short;
-      });
+      // Limit to 3 sentences for faster responses
+      const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0).slice(0, 3);
+      let result = sentences.join('. ').trim();
       
-      // Limit to 10 sentences for detailed but manageable responses
-      const finalSentences = shortSentences.slice(0, 10);
-      
-      // Join and clean up
-      let result = finalSentences.join('. ').trim();
       if (!result.endsWith('.') && !result.endsWith('!') && !result.endsWith('?')) {
         result += '.';
       }
-      
-      // Final cleanup
-      result = result.replace(/\.+/g, '.');
-      result = result.replace(/\s+/g, ' ');
-      result = result.replace(/\s+([.,!?])/g, '$1'); // Remove spaces before punctuation
       
       return result;
     }
@@ -632,76 +619,30 @@
 
 
 
-    // Real-time Data Simulation
+    // Real-time Data Simulation (optimized)
     function updateRealtimeData() {
       const weatherData = document.getElementById('weatherData');
       const currencyData = document.getElementById('currencyData');
       const flightData = document.getElementById('flightData');
       
-      // Simulate real-time updates
-      const weatherConditions = ['☀️ 72°F', '🌤️ 68°F', '⛅ 75°F', '🌧️ 65°F'];
-      const currencyRates = ['$1.08', '$1.12', '$1.05', '$1.15'];
-      const flightDeals = ['$299', '$349', '$399', '$449'];
-      
-      weatherData.textContent = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
-      currencyData.textContent = currencyRates[Math.floor(Math.random() * currencyRates.length)];
-      flightData.textContent = flightDeals[Math.floor(Math.random() * flightDeals.length)];
+      // Static data for faster loading
+      weatherData.textContent = '☀️ 72°F';
+      currencyData.textContent = '$1.08';
+      flightData.textContent = '$299';
     }
 
-    // Update data every 30 seconds
-    setInterval(updateRealtimeData, 30000);
+    // Update data once on load
     updateRealtimeData();
     
-    // Test function to verify language preservation
-    function testLanguagePreservation() {
-      const testTexts = {
-        'Hindi': 'नमस्ते! मैं आपका व्यक्तिगत ट्रैवल एजेंट हूं।',
-        'Russian': 'Привет! Я ваш персональный туристический агент.',
-        'Japanese': 'こんにちは！私はあなたのパーソナル旅行代理店です。',
-        'English': 'Hello! I am your personal travel agent.'
-      };
-      
-      console.log('Testing language preservation:');
-      Object.entries(testTexts).forEach(([lang, text]) => {
-        const cleaned = cleanTextForSpeech(text);
-        console.log(`${lang}: ${cleaned}`);
-      });
-    }
-    
-    // Run test on page load
-    testLanguagePreservation();
+
     
 
 
 
     
-    // Ollama AI integration function
+    // Optimized Ollama AI integration function
     async function callOllamaAI(prompt, model = 'llama3.1:8b') {
       try {
-        console.log(`Calling Ollama with model: ${model}`);
-        console.log('Prompt:', prompt);
-        
-        // First, check if Ollama is running
-        const healthCheck = await fetch('http://localhost:11434/api/tags', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-        
-        if (!healthCheck.ok) {
-          throw new Error(`Ollama not running or not accessible. Status: ${healthCheck.status}`);
-        }
-        
-        const availableModels = await healthCheck.json();
-        console.log('Available models:', availableModels);
-        
-        // Check if the requested model is available
-        const modelExists = availableModels.models?.some(m => m.name === model);
-        if (!modelExists) {
-          throw new Error(`Model ${model} not found. Available models: ${availableModels.models?.map(m => m.name).join(', ') || 'none'}`);
-        }
-        
         const response = await fetch('http://localhost:11434/api/generate', {
           method: 'POST',
           headers: {
@@ -714,18 +655,17 @@
             options: {
               temperature: 0.7,
               top_p: 0.9,
-              max_tokens: 500
+              max_tokens: 300, // Reduced for faster responses
+              num_predict: 150 // Limit response length
             }
           })
         });
         
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Ollama response:', data);
         
         if (data.response) {
           return data.response;
@@ -957,8 +897,8 @@
         // First, get local travel data response
         const localResponse = getTravelResponse(input, currentLang);
         
-        // Build conversation context from recent history
-        const recentHistory = conversationHistory.slice(-3).map(item => 
+        // Build conversation context from recent history (limited for speed)
+        const recentHistory = conversationHistory.slice(-1).map(item => 
           `${item.speaker === 'user' ? 'User' : 'Assistant'}: ${item.text}`
         ).join('\n');
         
@@ -979,49 +919,28 @@
           default: responseLanguage = 'English'; break;
         }
         
-        const aiPrompt = `You are a helpful travel agent assistant. 
+        const aiPrompt = `Travel agent: Answer in ${responseLanguage}. Question: "${input}". Context: ${localResponse}. Preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None'}. Keep response under 3 sentences.`;
 
-User question: "${input}"
-Local travel response: "${localResponse}"
-User preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None'}
 
-Recent conversation:
-${recentHistory}
-
-Instructions: Respond in ${responseLanguage} language. Provide helpful travel advice in 5-8 sentences. Include destination info, pricing, best times to visit, and practical tips. Be friendly and detailed.`;
-
-        console.log('Sending Ollama prompt:', aiPrompt);
         
-        // Try different Ollama models
-        const models = ['llama3.1:8b', 'mistral:7b', 'llama3.1:3b', 'llama2:7b'];
+        // Try primary model first, fallback quickly
         let aiResponse = null;
-        
-        for (const model of models) {
-          try {
-            console.log(`Trying Ollama model: ${model}`);
-            aiResponse = await callOllamaAI(aiPrompt, model);
-            console.log(`✅ Success with Ollama model: ${model}`);
-            break;
-          } catch (modelError) {
-            console.log(`❌ Failed with Ollama model ${model}:`, modelError);
-            if (model === models[models.length - 1]) {
-              throw modelError; // Re-throw if all models fail
-            }
-          }
+        try {
+          aiResponse = await callOllamaAI(aiPrompt, 'llama3.1:8b');
+        } catch (error) {
+          // Quick fallback to local response
+          throw error;
         }
         
         if (aiResponse) {
           const cleanResponse = cleanAndShortenText(aiResponse);
-          console.log('Cleaned Ollama response:', cleanResponse);
           return cleanResponse;
         } else {
-          throw new Error('No response from any Ollama model');
+          throw new Error('No response from Ollama');
         }
       } catch (error) {
-        console.error('Ollama AI response error:', error);
-        // Fallback to enhanced local response
+        // Quick fallback to enhanced local response
         const fallbackResponse = getEnhancedLocalResponse(input, currentLang);
-        console.log('Using enhanced fallback response:', fallbackResponse);
         return fallbackResponse;
       }
     }
