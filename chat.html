@@ -597,22 +597,23 @@
       const shortSentences = sentences.map(sentence => {
         let short = sentence.trim();
         
-        // Break very long sentences but allow longer content
-        if (short.length > 120) {
+        // Allow very long sentences for detailed responses
+        if (short.length > 200) {
           const parts = short.split(/[,;]/);
           if (parts.length > 1) {
             short = parts[0].trim();
           }
         }
         
-        // Remove only the most unnecessary words, keep more content
+        // Keep all content for maximum detail
+        // Only remove the most redundant words
         short = short.replace(/\b(very|really|quite|extremely|absolutely)\b/gi, '');
         
         return short;
       });
       
-      // Limit to 6 sentences maximum for comprehensive responses
-      const finalSentences = shortSentences.slice(0, 6);
+      // No sentence limit - allow full detailed responses
+      const finalSentences = shortSentences;
       
       // Join and clean up
       let result = finalSentences.join('. ').trim();
@@ -855,7 +856,7 @@
           default: responseLanguage = 'English'; break;
         }
         
-        const aiPrompt = `You are a helpful travel agent assistant. 
+        const aiPrompt = `You are an expert travel agent assistant with extensive knowledge of global destinations, travel planning, and tourism industry insights. 
         
         User Preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None set'}
         
@@ -868,11 +869,33 @@
         
         IMPORTANT: Respond in ${responseLanguage} language. If the user is speaking in ${responseLanguage}, you must respond in ${responseLanguage}.
         
-        Enhance the local response with additional AI insights. Provide comprehensive, detailed information in 4-6 sentences. 
-        Be friendly and provide practical tips, specific recommendations, pricing information, best times to visit, and useful details. 
-        If the local response is good, build upon it with more context, examples, and actionable advice.
-        If user has preferences set, tailor your recommendations accordingly with personalized suggestions and alternatives.
-        Include specific details about costs, timing, requirements, and insider tips when relevant.
+        Provide the most comprehensive, detailed, and thorough travel advice possible. Write extensive responses with no sentence limits - be as detailed as you can be.
+        
+        Include ALL of the following in your response:
+        - Detailed destination information and highlights
+        - Specific pricing ranges and budget considerations
+        - Best times to visit with seasonal details
+        - Weather patterns and climate information
+        - Cultural insights and local customs
+        - Transportation options and logistics
+        - Accommodation recommendations with price ranges
+        - Dining suggestions and local cuisine
+        - Visa requirements and documentation
+        - Health considerations and vaccinations
+        - Safety tips and local laws
+        - Hidden gems and off-the-beaten-path attractions
+        - Multiple alternatives and options
+        - Step-by-step planning advice
+        - Insider tips and local knowledge
+        - Booking recommendations and timing
+        - Packing suggestions and requirements
+        - Language considerations and phrases
+        - Currency and payment methods
+        - Emergency contacts and resources
+        
+        If user has preferences set, provide highly personalized suggestions with detailed explanations of why each option fits their profile and preferences.
+        
+        Be extremely thorough, comprehensive, and detailed in every aspect of your response. Provide the most complete travel advice possible.
         Use only plain text, no emojis or symbols, but preserve international characters for different languages.`;
         
         const response = await puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
