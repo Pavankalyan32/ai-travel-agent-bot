@@ -593,8 +593,8 @@
       const shortSentences = sentences.map(sentence => {
         let short = sentence.trim();
         
-        // Allow moderate sentence length for faster processing
-        if (short.length > 120) {
+        // Allow longer sentences for detailed responses
+        if (short.length > 200) {
           const parts = short.split(/[,;]/);
           if (parts.length > 1) {
             short = parts[0].trim();
@@ -608,8 +608,8 @@
         return short;
       });
       
-      // Limit to 8 sentences for faster responses
-      const finalSentences = shortSentences.slice(0, 8);
+      // Limit to 50 sentences for very detailed responses
+      const finalSentences = shortSentences.slice(0, 50);
       
       // Join and clean up
       let result = finalSentences.join('. ').trim();
@@ -856,11 +856,11 @@
         
         Preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None'}
         
-        Provide 6-8 sentences with: highlights, pricing, timing, weather, transport, accommodation, culture, tips. Be helpful and concise.`;
+        Provide 20-50 sentences with: highlights, pricing, timing, weather, transport, accommodation, culture, tips, visa info, health, safety, local customs, hidden gems, booking advice, packing tips, language phrases, currency, emergency contacts. Be extremely detailed and comprehensive.`;
         
-        // Add timeout to prevent hanging
+        // Add timeout to prevent hanging (increased for longer responses)
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('AI response timeout')), 15000)
+          setTimeout(() => reject(new Error('AI response timeout')), 30000)
         );
         
         const aiPromise = puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
@@ -899,7 +899,7 @@
         addConversationItem('user', `I want to know about ${actionText.toLowerCase()}`);
         
         // Show loading state
-        askLoading.textContent = 'Getting AI travel advice... (max 15s)';
+        askLoading.textContent = 'Getting AI travel advice... (max 30s)';
         askLoading.style.display = '';
         
         try {
@@ -982,7 +982,7 @@
       
       recognition.onresult = async (event) => {
         const transcript = event.results[0][0].transcript;
-        askLoading.textContent = 'Getting AI travel advice... (max 15s)';
+        askLoading.textContent = 'Getting AI travel advice... (max 30s)';
         
         // Add user message to conversation
         addConversationItem('user', transcript);
@@ -1064,7 +1064,7 @@
         addConversationItem('user', text);
         
         // Show loading state
-        askLoading.textContent = 'Getting AI travel advice... (max 15s)';
+        askLoading.textContent = 'Getting AI travel advice... (max 30s)';
         askLoading.style.display = '';
         
         try {
