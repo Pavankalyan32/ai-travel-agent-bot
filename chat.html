@@ -489,7 +489,7 @@
     <div class="conversation-container" id="conversationContainer">
       <div class="conversation-item bot">
         <div class="conversation-label">AI Travel Agent</div>
-        <div class="conversation-text">Hello! I'm your AI-powered travel assistant. I can help you plan your next adventure with intelligent recommendations and personalized advice. Ask me about destinations, flights, hotels, and travel tips, or use the quick action buttons above. Try saying "show checklist" or "voice commands" for more features!</div>
+        <div class="conversation-text" id="welcomeMessage">Hello! I'm your AI-powered travel assistant. I can help you plan your next adventure with intelligent recommendations and personalized advice. Ask me about destinations, flights, hotels, and travel tips, or use the quick action buttons above. Try saying "show checklist" or "voice commands" for more features!</div>
       </div>
     </div>
     
@@ -672,6 +672,23 @@
     // Run test on page load
     testLanguagePreservation();
     
+    // Function to update welcome message based on current language
+    function updateWelcomeMessage() {
+      const welcomeMessage = document.getElementById('welcomeMessage');
+      const welcomeMessages = {
+        'en-US': 'Hello! I\'m your AI-powered travel assistant. I can help you plan your next adventure with intelligent recommendations and personalized advice. Ask me about destinations, flights, hotels, and travel tips, or use the quick action buttons above. Try saying "show checklist" or "voice commands" for more features!',
+        'hi-IN': 'नमस्ते! मैं आपका AI-संचालित यात्रा सहायक हूं। मैं आपकी अगली यात्रा की योजना बनाने में मदद कर सकता हूं। मुझसे गंतव्य, उड़ानें, होटल और यात्रा टिप्स के बारे में पूछें!',
+        'ru-RU': 'Привет! Я ваш ИИ-ассистент для путешествий. Я могу помочь спланировать ваше следующее приключение с умными рекомендациями. Спросите меня о направлениях, рейсах, отелях и советах по путешествиям!',
+        'ja-JP': 'こんにちは！私はあなたのAI旅行アシスタントです。次回の冒険を計画するお手伝いができます。目的地、フライト、ホテル、旅行のヒントについてお聞きください！'
+      };
+      if (welcomeMessage) {
+        welcomeMessage.textContent = welcomeMessages[currentLang] || welcomeMessages['en-US'];
+      }
+    }
+    
+    // Update welcome message on page load
+    updateWelcomeMessage();
+    
     // Function to update user profile display
     function updateUserProfile() {
       const userProfileCard = document.getElementById('userProfileCard');
@@ -830,6 +847,15 @@
           preferencesContext.push(`Preferred Destinations: ${userPreferences.preferredDestinations.join(', ')}`);
         }
         
+        // Determine language for response
+        let responseLanguage = 'English';
+        switch(currentLang) {
+          case 'hi-IN': responseLanguage = 'Hindi'; break;
+          case 'ru-RU': responseLanguage = 'Russian'; break;
+          case 'ja-JP': responseLanguage = 'Japanese'; break;
+          default: responseLanguage = 'English'; break;
+        }
+        
         const aiPrompt = `You are a helpful travel agent assistant. 
         
         User Preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None set'}
@@ -841,10 +867,12 @@
         
         Local travel data response: "${localResponse}"
         
+        IMPORTANT: Respond in ${responseLanguage} language. If the user is speaking in ${responseLanguage}, you must respond in ${responseLanguage}.
+        
         Enhance the local response with additional AI insights. Keep it under 3 sentences. 
         Be friendly and provide practical tips. If the local response is good, build upon it.
         If user has preferences set, tailor your recommendations accordingly.
-        IMPORTANT: Use only plain text, no emojis or symbols, but preserve international characters for different languages.`;
+        Use only plain text, no emojis or symbols, but preserve international characters for different languages.`;
         
         const response = await puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
         const cleanResponse = cleanAndShortenText(response.message.content[0].text);
@@ -860,12 +888,15 @@
       conversationContainer.innerHTML = `
         <div class="conversation-item bot">
           <div class="conversation-label">AI Travel Agent</div>
-          <div class="conversation-text">Hello! I'm your AI-powered travel assistant. I can help you plan your next adventure with intelligent recommendations and personalized advice. Ask me about destinations, flights, hotels, and travel tips, or use the quick action buttons above. Try saying "show checklist" or "voice commands" for more features!</div>
+          <div class="conversation-text" id="welcomeMessage">Hello! I'm your AI-powered travel assistant. I can help you plan your next adventure with intelligent recommendations and personalized advice. Ask me about destinations, flights, hotels, and travel tips, or use the quick action buttons above. Try saying "show checklist" or "voice commands" for more features!</div>
         </div>
       `;
       conversationHistory = [];
       askResult.style.display = 'none';
       askLoading.style.display = 'none';
+      
+      // Update the welcome message to current language
+      updateWelcomeMessage();
     }
 
     // Handle quick action buttons with AI enhancement
@@ -985,6 +1016,9 @@
       langSelect.addEventListener('change', () => {
         currentLang = langSelect.value;
         recognition.lang = currentLang;
+        
+        // Update the welcome message when language changes
+        updateWelcomeMessage();
       });
     } else {
       micBtn.disabled = true;
