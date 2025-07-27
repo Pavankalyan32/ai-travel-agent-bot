@@ -1,9 +1,9 @@
 # 🌍 Travel Agent Bot
 
-A revolutionary AI-powered travel assistant that works offline, supports multiple languages, and provides a seamless travel planning experience.
+A revolutionary AI-powered travel assistant with Puter.js integration, supports multiple languages, and provides a seamless travel planning experience.
 
 ![Travel Agent Bot Demo](https://img.shields.io/badge/Status-Live%20Demo-brightgreen)
-![Offline Support](https://img.shields.io/badge/Offline-Supported-blue)
+
 ![Multi-Language](https://img.shields.io/badge/Languages-4%20Supported-orange)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-green)
 
@@ -12,13 +12,13 @@ A revolutionary AI-powered travel assistant that works offline, supports multipl
 ### 🌟 Core Features
 - **🎤 Advanced Voice Commands** - Natural language processing with context awareness
 - **🌍 Multi-language Support** - English, Hindi, Russian, Japanese with native voice synthesis
-- **📱 Progressive Web App** - Works offline, installable on any device
+- **📱 Progressive Web App** - Installable on any device
 - **♿ Complete Accessibility** - Full keyboard navigation and screen reader support
 - **📋 Interactive Travel Checklist** - Smart planning tools with progress tracking
 - **📊 Real-time Data Display** - Weather, currency, and flight deals
 
 ### 🔧 Technical Features
-- **🔄 Offline Functionality** - Service worker caching for complete offline experience
+
 - **🎯 Voice Command Processing** - Intelligent response system with keyword detection
 - **📱 Responsive Design** - Works perfectly on all devices and screen sizes
 - **🔒 Security** - Input validation, rate limiting, and secure service worker
@@ -102,36 +102,9 @@ Use the quick action buttons for common queries:
 - **C** - Toggle travel checklist
 - **Space** - Activate voice recognition
 - **Tab** - Navigate through elements
-- **Enter** - Submit text input (offline mode)
+- **Enter** - Submit text input
 
-## 🧪 Offline Testing
-
-### Test Offline Functionality
-
-1. **Open the offline test page:**
-   ```
-   http://localhost:8000/offline-test.html
-   ```
-
-2. **Follow the test instructions:**
-   - Test all features while online
-   - Disconnect your internet
-   - Observe how the interface adapts
-   - Test offline features
-   - Reconnect to see features restore
-
-### Offline Features Available
-✅ Service Worker Caching  
-✅ Travel Response Database  
-✅ UI and Styling  
-✅ Quick Action Buttons  
-✅ Travel Checklist  
-✅ Text Input Fallback  
-
-### Features Requiring Internet
-❌ Voice Recognition  
-❌ Text-to-Speech  
-❌ Real-time Data  
+  
 
 ## 🎤 Voice Commands
 
@@ -142,9 +115,9 @@ Use the quick action buttons for common queries:
 - **"Clear conversation"** - Start fresh
 
 ### Travel-Specific Commands
-- **"Book flight to [city]"** - Flight booking assistance
-- **"Weather in [city]"** - Weather information
-- **"Currency in [country]"** - Exchange rates
+- **"Set budget [amount]"** - Save your budget preference
+- **"I prefer [style]"** - Set travel style (luxury, budget, adventure, etc.)
+- **"Save destination [name]"** - Remember preferred destination
 - **"Tell me about [destination]"** - Destination information
 
 ### Planning Commands
@@ -160,8 +133,7 @@ Use the quick action buttons for common queries:
 travel-agent-bot/
 ├── chat.html              # Main application
 ├── travel-agent-data.js   # Response database
-├── sw.js                  # Service worker
-├── offline-test.html      # Offline testing
+
 └── README.md             # Documentation
 ```
 
@@ -170,7 +142,7 @@ travel-agent-bot/
 - **CSS3** - Modern styling with animations
 - **JavaScript ES6+** - Advanced features and modules
 - **Web Speech API** - Voice recognition and synthesis
-- **Service Workers** - Offline functionality
+
 - **Progressive Web App** - Installable web app
 
 ### Browser Support
@@ -180,7 +152,7 @@ travel-agent-bot/
 - ✅ Edge 79+
 
 ### Performance Features
-- **Service Worker Caching** - Instant loading
+
 - **Lazy Loading** - Optimized resource loading
 - **Minified Assets** - Reduced file sizes
 - **Efficient DOM Updates** - Smooth animations
