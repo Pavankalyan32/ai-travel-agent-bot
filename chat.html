@@ -558,7 +558,6 @@
     const checklistToggle = document.getElementById('checklistToggle');
     const voiceHelp = document.getElementById('voiceHelp');
     const keyboardHint = document.getElementById('keyboardHint');
-    const realtimeData = document.getElementById('realtimeData');
     
     let recognizing = false;
     let recognition;
@@ -842,7 +841,7 @@
       conversationHistory.push({ speaker, text: cleanText, timestamp: new Date(), isAI, isEnhanced });
     }
 
-    // Enhanced voice command processing with Puter.js AI
+    // Enhanced voice command processing with Ollama AI
     async function processVoiceCommand(input) {
       const lowerInput = input.toLowerCase();
       
@@ -1177,12 +1176,12 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
           navigator.serviceWorker.register('service-worker.js')
-            .then(function(registration) {
-              console.log('ServiceWorker registration successful:', registration.scope);
-            })
-            .catch(function(error) {
-              console.log('ServiceWorker registration failed:', error);
-            });
+                      .then(function(registration) {
+            // Service worker registered successfully
+          })
+          .catch(function(error) {
+            // Service worker registration failed
+          });
         });
       }
     </script>

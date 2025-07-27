@@ -1,7 +1,7 @@
 {
   "name": "travel-agent-bot",
   "version": "1.0.0",
-  "description": "A revolutionary AI-powered travel assistant with Puter.js integration, supports multiple languages, and provides a seamless travel planning experience.",
+  "description": "A revolutionary AI-powered travel assistant with Ollama integration, supports multiple languages, and provides a seamless travel planning experience.",
   "main": "chat.html",
   "scripts": {
     "start": "python -m http.server 8000",
@@ -13,7 +13,7 @@
     "travel",
     "ai",
     "voice-assistant",
-
+    "ollama",
     "progressive-web-app",
     "accessibility",
     "multi-language",

@@ -43,7 +43,7 @@ jobs:
     
     - name: Check AI integration
       run: |
-        if grep -q "puter.ai.chat" chat.html; then
+        if grep -q "callOllamaAI" chat.html; then
           echo "✅ AI integration is implemented"
         else
           echo "❌ AI integration is missing"

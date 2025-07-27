@@ -1,6 +1,6 @@
 # 🌍 Travel Agent Bot
 
-A revolutionary AI-powered travel assistant with Puter.js integration, supports multiple languages, and provides a seamless travel planning experience.
+A revolutionary AI-powered travel assistant with Ollama integration, supports multiple languages, and provides a seamless travel planning experience.
 
 ![Travel Agent Bot Demo](https://img.shields.io/badge/Status-Live%20Demo-brightgreen)
 
