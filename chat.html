@@ -268,6 +268,16 @@
       border-radius: 15px;
       border: 2px dashed #8b5cf6;
     }
+    .ai-indicator {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 0.8rem;
+      color: #10b981;
+      font-weight: 600;
+    }
+    .ai-indicator i {
+      margin-right: 4px;
+    }
     .ask-refresh-btn {
       margin-top: 16px;
       background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
@@ -373,7 +383,7 @@
 <body>
   <div class="ask-center">
     <div class="ask-title">Murmu</div>
-    <div class="ask-desc">Ask me about destinations, flights, hotels, and travel tips</div>
+    <div class="ask-desc">AI-powered travel assistant - Ask me about destinations, flights, hotels, and travel tips</div>
     
     <!-- Real-time Data Display -->
     <div class="realtime-data" id="realtimeData">
@@ -388,6 +398,10 @@
       <div class="data-card">
         <div class="data-label">Flight Deals</div>
         <div class="data-value" id="flightData">Loading...</div>
+      </div>
+      <div class="data-card" id="userProfileCard" style="display: none;">
+        <div class="data-label">Your Profile</div>
+        <div class="data-value" id="userProfileData">Set preferences</div>
       </div>
     </div>
     
@@ -435,6 +449,7 @@
       <button class="quick-btn" data-action="visa">📋 Visa</button>
       <button class="quick-btn" data-action="insurance">🛡️ Insurance</button>
       <button class="quick-btn" data-action="packing">🧳 Packing</button>
+      <button class="quick-btn" data-action="recommendations">💡 Smart Recommendations</button>
     </div>
     
     <select id="langSelect" style="margin-bottom:20px; padding:8px 18px; border-radius:8px; border:1px solid #e5e7eb; font-size:1rem; font-family:inherit; outline:none; background:white;">
@@ -463,8 +478,8 @@
     <!-- Conversation History -->
     <div class="conversation-container" id="conversationContainer">
       <div class="conversation-item bot">
-        <div class="conversation-label">Travel Agent</div>
-        <div class="conversation-text">Hello! I'm your personal travel agent. How can I help you plan your next adventure? You can ask me about destinations, flights, hotels, and travel tips, or use the quick action buttons above. Try saying "show checklist" or "voice commands" for more features!</div>
+        <div class="conversation-label">AI Travel Agent</div>
+        <div class="conversation-text">Hello! I'm your AI-powered travel assistant. I can help you plan your next adventure with intelligent recommendations and personalized advice. Ask me about destinations, flights, hotels, and travel tips, or use the quick action buttons above. Try saying "show checklist" or "voice commands" for more features!</div>
       </div>
     </div>
     
@@ -484,9 +499,9 @@
     <h4>Voice Commands</h4>
     <div class="voice-command"><strong>"Show checklist"</strong> - Open travel checklist</div>
     <div class="voice-command"><strong>"Voice commands"</strong> - Show this help</div>
-    <div class="voice-command"><strong>"Book flight to [city]"</strong> - Flight booking</div>
-    <div class="voice-command"><strong>"Weather in [city]"</strong> - Get weather info</div>
-    <div class="voice-command"><strong>"Currency in [country]"</strong> - Exchange rates</div>
+    <div class="voice-command"><strong>"Set budget [amount]"</strong> - Save your budget</div>
+    <div class="voice-command"><strong>"I prefer [style]"</strong> - Set travel style</div>
+    <div class="voice-command"><strong>"Save destination [name]"</strong> - Remember destination</div>
     <div class="voice-command"><strong>"Clear conversation"</strong> - Start fresh</div>
   </div>
 
@@ -516,6 +531,67 @@
     let conversationHistory = [];
     let isChecklistVisible = false;
     let isVoiceHelpVisible = false;
+    
+    // User preferences and travel profile
+    let userPreferences = {
+      budget: null,
+      travelStyle: null,
+      preferredDestinations: [],
+      interests: [],
+      accessibility: false,
+      familyTravel: false
+    };
+
+    // Text cleaning and shortening function
+    function cleanAndShortenText(text) {
+      if (!text) return '';
+      
+      // Remove extra whitespace and normalize
+      let cleaned = text.replace(/\s+/g, ' ').trim();
+      
+      // Remove common AI artifacts and formal language
+      cleaned = cleaned.replace(/^(Here's|Here is|I'll|I will|Let me|Based on|According to|I can|I would|I'd)/gi, '');
+      cleaned = cleaned.replace(/(\.|,|!|\?)\s*(Here's|Here is|I'll|I will|Let me|Based on|According to|I can|I would|I'd)/gi, '$1');
+      
+      // Remove redundant phrases
+      cleaned = cleaned.replace(/\b(please note that|it's worth noting that|it's important to|keep in mind that|remember that)\b/gi, '');
+      cleaned = cleaned.replace(/\b(in terms of|when it comes to|as far as|regarding|concerning)\b/gi, '');
+      
+      // Shorten long sentences by breaking at natural points
+      const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      const shortSentences = sentences.map(sentence => {
+        let short = sentence.trim();
+        
+        // Break very long sentences
+        if (short.length > 80) {
+          const parts = short.split(/[,;]/);
+          if (parts.length > 1) {
+            short = parts[0].trim();
+          }
+        }
+        
+        // Remove unnecessary words
+        short = short.replace(/\b(very|really|quite|extremely|absolutely)\b/gi, '');
+        short = short.replace(/\b(actually|basically|essentially|literally)\b/gi, '');
+        
+        return short;
+      });
+      
+      // Limit to 3 sentences maximum
+      const finalSentences = shortSentences.slice(0, 3);
+      
+      // Join and clean up
+      let result = finalSentences.join('. ').trim();
+      if (!result.endsWith('.') && !result.endsWith('!') && !result.endsWith('?')) {
+        result += '.';
+      }
+      
+      // Final cleanup
+      result = result.replace(/\.+/g, '.');
+      result = result.replace(/\s+/g, ' ');
+      
+      return result;
+    }
 
     // Service Worker Registration
     if ('serviceWorker' in navigator) {
@@ -570,7 +646,7 @@
         
         // Update conversation to inform user
         if (conversationContainer.children.length === 1) {
-          addConversationItem('bot', 'You\'re currently offline. I can still help with travel information, but voice features are disabled. You can use the quick action buttons or type your questions.');
+          addConversationItem('bot', 'You\'re currently offline. I can still help with travel information using my local knowledge, but AI features and voice input are disabled. You can use the quick action buttons or type your questions.');
         }
       } else {
         // Re-enable voice features when online
@@ -623,6 +699,25 @@
     // Update data every 30 seconds
     setInterval(updateRealtimeData, 30000);
     updateRealtimeData();
+    
+    // Function to update user profile display
+    function updateUserProfile() {
+      const userProfileCard = document.getElementById('userProfileCard');
+      const userProfileData = document.getElementById('userProfileData');
+      
+      if (userPreferences.budget || userPreferences.travelStyle || userPreferences.preferredDestinations.length > 0) {
+        userProfileCard.style.display = 'block';
+        const profileInfo = [];
+        if (userPreferences.budget) profileInfo.push(`$${userPreferences.budget}`);
+        if (userPreferences.travelStyle) profileInfo.push(userPreferences.travelStyle);
+        if (userPreferences.preferredDestinations.length > 0) {
+          profileInfo.push(userPreferences.preferredDestinations[0]);
+        }
+        userProfileData.textContent = profileInfo.join(', ');
+      } else {
+        userProfileCard.style.display = 'none';
+      }
+    }
 
     // Checklist functionality
     function toggleChecklist() {
@@ -671,22 +766,23 @@
     }
 
     // Add conversation item
-    function addConversationItem(speaker, text) {
+    function addConversationItem(speaker, text, isAI = false) {
       const item = document.createElement('div');
       item.className = `conversation-item ${speaker}`;
+      const aiIndicator = isAI ? '<span class="ai-indicator"><i class="fa-solid fa-robot"></i>AI</span>' : '';
       item.innerHTML = `
-        <div class="conversation-label">${speaker === 'user' ? 'You' : 'Travel Agent'}</div>
+        <div class="conversation-label">${speaker === 'user' ? 'You' : 'AI Travel Agent'}${aiIndicator}</div>
         <div class="conversation-text">${text}</div>
       `;
       conversationContainer.appendChild(item);
       conversationContainer.scrollTop = conversationContainer.scrollHeight;
       
       // Store in history
-      conversationHistory.push({ speaker, text, timestamp: new Date() });
+      conversationHistory.push({ speaker, text, timestamp: new Date(), isAI });
     }
 
-    // Enhanced voice command processing
-    function processVoiceCommand(input) {
+    // Enhanced voice command processing with Puter.js AI
+    async function processVoiceCommand(input) {
       const lowerInput = input.toLowerCase();
       
       if (lowerInput.includes('show checklist') || lowerInput.includes('open checklist')) {
@@ -699,41 +795,86 @@
         return "I've shown the voice commands help. You can also press 'H' on your keyboard for quick access!";
       }
       
-      if (lowerInput.includes('book flight to') || lowerInput.includes('book a flight to')) {
-        const destination = input.match(/to\s+([a-zA-Z\s]+)/i);
-        if (destination) {
-          return `I'll help you book a flight to ${destination[1].trim()}. Let me search for the best deals and available dates for you.`;
-        }
-      }
-      
-      if (lowerInput.includes('weather in') || lowerInput.includes('weather for')) {
-        const city = input.match(/in\s+([a-zA-Z\s]+)/i) || input.match(/for\s+([a-zA-Z\s]+)/i);
-        if (city) {
-          return `Let me check the weather for ${city[1].trim()}. I'll provide you with current conditions and forecast.`;
-        }
-      }
-      
-      if (lowerInput.includes('currency in') || lowerInput.includes('exchange rate')) {
-        const country = input.match(/in\s+([a-zA-Z\s]+)/i);
-        if (country) {
-          return `I'll get you the current exchange rates for ${country[1].trim()}. This will help you plan your budget better.`;
-        }
-      }
-      
       if (lowerInput.includes('clear conversation') || lowerInput.includes('new conversation')) {
         clearConversation();
         return "I've cleared our conversation. We can start fresh!";
       }
       
-      // Default to regular travel response
-      return getTravelResponse(input, currentLang);
+      if (lowerInput.includes('set budget') || lowerInput.includes('my budget is')) {
+        const budgetMatch = input.match(/(\d+)/);
+        if (budgetMatch) {
+          userPreferences.budget = parseInt(budgetMatch[1]);
+          updateUserProfile();
+          return `I've saved your budget of $${budgetMatch[1]}. I'll suggest destinations and options within your range.`;
+        }
+      }
+      
+      if (lowerInput.includes('travel style') || lowerInput.includes('i prefer')) {
+        const styles = ['luxury', 'budget', 'adventure', 'relaxation', 'culture', 'family'];
+        const foundStyle = styles.find(style => lowerInput.includes(style));
+        if (foundStyle) {
+          userPreferences.travelStyle = foundStyle;
+          updateUserProfile();
+          return `I've noted you prefer ${foundStyle} travel. I'll tailor my recommendations accordingly.`;
+        }
+      }
+      
+      if (lowerInput.includes('save destination') || lowerInput.includes('remember')) {
+        const destinationMatch = input.match(/(?:save|remember)\s+([a-zA-Z\s]+)/i);
+        if (destinationMatch) {
+          const destination = destinationMatch[1].trim();
+          if (!userPreferences.preferredDestinations.includes(destination)) {
+            userPreferences.preferredDestinations.push(destination);
+          }
+          updateUserProfile();
+          return `I've saved ${destination} to your preferred destinations.`;
+        }
+      }
+      
+      // Use Puter.js AI for intelligent travel responses with context
+      try {
+        // Build conversation context from recent history
+        const recentHistory = conversationHistory.slice(-3).map(item => 
+          `${item.speaker === 'user' ? 'User' : 'Assistant'}: ${item.text}`
+        ).join('\n');
+        
+        // Build user preferences context
+        const preferencesContext = [];
+        if (userPreferences.budget) preferencesContext.push(`Budget: $${userPreferences.budget}`);
+        if (userPreferences.travelStyle) preferencesContext.push(`Travel Style: ${userPreferences.travelStyle}`);
+        if (userPreferences.preferredDestinations.length > 0) {
+          preferencesContext.push(`Preferred Destinations: ${userPreferences.preferredDestinations.join(', ')}`);
+        }
+        
+        const aiPrompt = `You are a helpful travel agent assistant. 
+        
+        User Preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None set'}
+        
+        Recent conversation context:
+        ${recentHistory}
+        
+        Current user question: "${input}"
+        
+        Provide a concise, helpful response with short sentences. Keep it under 3 sentences. 
+        Focus on practical tips and clear advice. Be friendly but brief.
+        If the user is asking follow-up questions, reference the previous context.
+        If user has preferences set, tailor your recommendations accordingly.`;
+        
+        const response = await puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
+        const cleanResponse = cleanAndShortenText(response.message.content[0].text);
+        return cleanResponse;
+      } catch (error) {
+        console.error('AI response error:', error);
+        // Fallback to regular travel response if AI fails
+        return getTravelResponse(input, currentLang);
+      }
     }
 
     function clearConversation() {
       conversationContainer.innerHTML = `
         <div class="conversation-item bot">
-          <div class="conversation-label">Travel Agent</div>
-          <div class="conversation-text">Hello! I'm your personal travel agent. How can I help you plan your next adventure? You can ask me about destinations, flights, hotels, and travel tips, or use the quick action buttons above. Try saying "show checklist" or "voice commands" for more features!</div>
+          <div class="conversation-label">AI Travel Agent</div>
+          <div class="conversation-text">Hello! I'm your AI-powered travel assistant. I can help you plan your next adventure with intelligent recommendations and personalized advice. Ask me about destinations, flights, hotels, and travel tips, or use the quick action buttons above. Try saying "show checklist" or "voice commands" for more features!</div>
         </div>
       `;
       conversationHistory = [];
@@ -741,21 +882,34 @@
       askLoading.style.display = 'none';
     }
 
-    // Handle quick action buttons
+    // Handle quick action buttons with AI enhancement
     quickButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const action = btn.dataset.action;
         const actionText = btn.textContent.replace(/[🌍✈️🏨💰🌤️📋🛡️🧳]/g, '').trim();
         
         // Add user message
         addConversationItem('user', `I want to know about ${actionText.toLowerCase()}`);
         
-        // Get bot response
-        const response = getTravelResponse(action, currentLang);
-        addConversationItem('bot', response);
+        // Show loading state
+        askLoading.textContent = 'Getting AI travel advice...';
+        askLoading.style.display = '';
         
-        // Speak the response
-        speakResponse(response);
+        try {
+          // Get AI-enhanced response
+          const response = await processVoiceCommand(`Give me brief tips about ${actionText.toLowerCase()} for travel`);
+          addConversationItem('bot', response, true); // Mark as AI response
+          
+          // Speak the response
+          speakResponse(response);
+        } catch (error) {
+          // Fallback to regular response
+          const response = getTravelResponse(action, currentLang);
+          addConversationItem('bot', response);
+          speakResponse(response);
+        } finally {
+          askLoading.style.display = 'none';
+        }
       });
     });
 
@@ -818,15 +972,15 @@
       
       recognition.onresult = async (event) => {
         const transcript = event.results[0][0].transcript;
-        askLoading.textContent = 'Processing your travel request...';
+        askLoading.textContent = 'Getting AI travel advice...';
         
         // Add user message to conversation
         addConversationItem('user', transcript);
         
         try {
-          // Process voice command or get travel agent response
-          const response = processVoiceCommand(transcript);
-          addConversationItem('bot', response);
+          // Process voice command or get AI-powered travel agent response
+          const response = await processVoiceCommand(transcript);
+          addConversationItem('bot', response, true); // Mark as AI response
           askLoading.style.display = 'none';
           askResult.style.display = '';
 
@@ -890,15 +1044,27 @@
     const textInput = document.getElementById('textInput');
     const sendBtn = document.getElementById('sendBtn');
     
-    function handleTextInput() {
+    async function handleTextInput() {
       const text = textInput.value.trim();
       if (text) {
         // Add user message
         addConversationItem('user', text);
         
-        // Get bot response
-        const response = getTravelResponse(text, currentLang);
-        addConversationItem('bot', response);
+        // Show loading state
+        askLoading.textContent = 'Getting AI travel advice...';
+        askLoading.style.display = '';
+        
+        try {
+          // Get AI-enhanced response
+          const response = await processVoiceCommand(text);
+          addConversationItem('bot', response, true); // Mark as AI response
+        } catch (error) {
+          // Fallback to regular response
+          const response = getTravelResponse(text, currentLang);
+          addConversationItem('bot', response);
+        } finally {
+          askLoading.style.display = 'none';
+        }
         
         // Clear input
         textInput.value = '';
