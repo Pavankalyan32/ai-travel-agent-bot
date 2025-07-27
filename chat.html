@@ -393,9 +393,6 @@
   <div class="ask-center">
     <div class="ask-title">Murmu</div>
     <div class="ask-desc">AI-powered travel assistant - Ask me about destinations, flights, hotels, and travel tips</div>
-    <div id="ollamaStatus" style="margin-bottom:10px; padding:8px 16px; border-radius:8px; background:#f3f4f6; color:#6b7280; font-size:0.9rem;">
-      <i class="fa-solid fa-circle" style="color:#9ca3af;"></i> Checking Ollama status...
-    </div>
     
     <!-- Real-time Data Display -->
     <div class="realtime-data" id="realtimeData">
@@ -503,10 +500,6 @@
     
     <button class="ask-refresh-btn" id="refreshBtn" tabindex="0">
       <i class="fa-solid fa-rotate-right" style="margin-right:6px;"></i> New Conversation
-    </button>
-    
-    <button class="ask-refresh-btn" id="testAiBtn" tabindex="0" style="margin-left:10px; background:linear-gradient(135deg, #10b981 0%, #059669 100%);">
-      <i class="fa-solid fa-robot" style="margin-right:6px;"></i> Test Ollama
     </button>
   </div>
 
@@ -678,76 +671,9 @@
     // Run test on page load
     testLanguagePreservation();
     
-    // Function to update Ollama status indicator
-    function updateOllamaStatus(status, message) {
-      const statusElement = document.getElementById('ollamaStatus');
-      const icon = statusElement.querySelector('i');
-      
-      switch(status) {
-        case 'success':
-          statusElement.style.background = '#d1fae5';
-          statusElement.style.color = '#065f46';
-          icon.style.color = '#10b981';
-          icon.className = 'fa-solid fa-circle-check';
-          break;
-        case 'warning':
-          statusElement.style.background = '#fef3c7';
-          statusElement.style.color = '#92400e';
-          icon.style.color = '#f59e0b';
-          icon.className = 'fa-solid fa-triangle-exclamation';
-          break;
-        case 'error':
-          statusElement.style.background = '#fee2e2';
-          statusElement.style.color = '#991b1b';
-          icon.style.color = '#ef4444';
-          icon.className = 'fa-solid fa-circle-xmark';
-          break;
-        default:
-          statusElement.style.background = '#f3f4f6';
-          statusElement.style.color = '#6b7280';
-          icon.style.color = '#9ca3af';
-          icon.className = 'fa-solid fa-circle';
-      }
-      
-      statusElement.innerHTML = `${icon.outerHTML} ${message}`;
-    }
 
-    // Test Ollama availability
-    setTimeout(async () => {
-      console.log('=== OLLAMA DEBUGGING ===');
-      console.log('Checking Ollama availability...');
-      
-      try {
-        // First, just check if Ollama is running
-        const healthCheck = await fetch('http://localhost:11434/api/tags');
-        if (healthCheck.ok) {
-          const models = await healthCheck.json();
-          console.log('✅ Ollama is running!');
-          console.log('Available models:', models);
-          
-          if (models.models && models.models.length > 0) {
-            updateOllamaStatus('success', `Ollama running with ${models.models.length} model(s)`);
-            const testResponse = await callOllamaAI('Say "Hello, Ollama is working!"', 'llama3.1:8b');
-            console.log('✅ Ollama test successful:', testResponse);
-          } else {
-            updateOllamaStatus('warning', 'Ollama running but no models installed. Run: ollama pull llama3.1:8b');
-            console.log('⚠️ Ollama is running but no models are installed');
-            console.log('Run: ollama pull llama3.1:8b');
-          }
-        } else {
-          updateOllamaStatus('error', 'Ollama not running. Start with: ollama serve');
-          console.error('❌ Ollama is not running');
-          console.log('Start Ollama with: ollama serve');
-        }
-      } catch (error) {
-        updateOllamaStatus('error', 'Ollama not accessible. Install from: https://ollama.ai/');
-        console.error('❌ Ollama test failed:', error);
-        console.log('Make sure Ollama is installed and running on localhost:11434');
-        console.log('Install Ollama from: https://ollama.ai/');
-        console.log('Start Ollama: ollama serve');
-        console.log('Download model: ollama pull llama3.1:8b');
-      }
-    }, 2000);
+
+
     
     // Ollama AI integration function
     async function callOllamaAI(prompt, model = 'llama3.1:8b') {
@@ -1252,31 +1178,6 @@ Instructions: Respond in ${responseLanguage} language. Provide helpful travel ad
         window.speechSynthesis.cancel();
       }
       clearConversation();
-    });
-    
-        // Test AI button
-    const testAiBtn = document.getElementById('testAiBtn');
-    testAiBtn.addEventListener('click', async () => {
-      console.log('Testing Ollama AI manually...');
-      addConversationItem('user', 'Testing Ollama AI connection...');
-      
-      try {
-        const testResponse = await callOllamaAI('Say "AI is working!" in one sentence.', 'llama3.1:8b');
-        console.log('Manual Ollama test response:', testResponse);
-        
-        if (testResponse) {
-          addConversationItem('bot', `✅ Ollama AI Test Successful: ${testResponse}`, true, true);
-        } else {
-          addConversationItem('bot', '❌ Ollama responded but with empty response.');
-        }
-      } catch (error) {
-        console.error('Manual Ollama test failed:', error);
-        console.error('Error type:', typeof error);
-        console.error('Error keys:', Object.keys(error || {}));
-        console.error('Error message:', error?.message);
-        console.error('Error stack:', error?.stack);
-        addConversationItem('bot', `❌ Ollama Test Failed: ${error.message || 'Unknown error'}. Make sure Ollama is running on localhost:11434`);
-      }
     });
 
     // Event listeners for accessibility
