@@ -580,9 +580,13 @@
       // Remove emojis and special symbols but preserve international characters
       cleaned = cleaned.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
       
-              // Remove only the most common AI artifacts for speed
-        cleaned = cleaned.replace(/^(Here's|Here is|I'll|I will|Let me)/gi, '');
-        cleaned = cleaned.replace(/(\.|,|!|\?)\s*(Here's|Here is|I'll|I will|Let me)/gi, '$1');
+      // Remove common AI artifacts and formal language
+      cleaned = cleaned.replace(/^(Here's|Here is|I'll|I will|Let me|Based on|According to|I can|I would|I'd)/gi, '');
+      cleaned = cleaned.replace(/(\.|,|!|\?)\s*(Here's|Here is|I'll|I will|Let me|Based on|According to|I can|I would|I'd)/gi, '$1');
+      
+      // Remove redundant phrases
+      cleaned = cleaned.replace(/\b(please note that|it's worth noting that|it's important to|keep in mind that|remember that)\b/gi, '');
+      cleaned = cleaned.replace(/\b(in terms of|when it comes to|as far as|regarding|concerning)\b/gi, '');
       
       // Remove bullet points and list markers
       cleaned = cleaned.replace(/^[\s•\-\*]+/gm, '');
@@ -594,7 +598,7 @@
         let short = sentence.trim();
         
         // Allow longer sentences for detailed responses
-        if (short.length > 200) {
+        if (short.length > 150) {
           const parts = short.split(/[,;]/);
           if (parts.length > 1) {
             short = parts[0].trim();
@@ -608,8 +612,8 @@
         return short;
       });
       
-      // Limit to 50 sentences for very detailed responses
-      const finalSentences = shortSentences.slice(0, 50);
+      // Limit to 10 sentences for detailed but manageable responses
+      const finalSentences = shortSentences.slice(0, 10);
       
       // Join and clean up
       let result = finalSentences.join('. ').trim();
@@ -830,8 +834,8 @@
         // First, get local travel data response
         const localResponse = getTravelResponse(input, currentLang);
         
-        // Build conversation context from recent history (limit to last 2 for speed)
-        const recentHistory = conversationHistory.slice(-2).map(item => 
+        // Build conversation context from recent history
+        const recentHistory = conversationHistory.slice(-3).map(item => 
           `${item.speaker === 'user' ? 'User' : 'Assistant'}: ${item.text}`
         ).join('\n');
         
@@ -852,26 +856,39 @@
           default: responseLanguage = 'English'; break;
         }
         
-        const aiPrompt = `Travel agent: Respond in ${responseLanguage}. User: "${input}". Local data: "${localResponse}". 
+        const aiPrompt = `You are a travel agent assistant. User question: "${input}". Local response: "${localResponse}". 
         
-        Preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None'}
+        User preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None'}
         
-        Provide 20-50 sentences with: highlights, pricing, timing, weather, transport, accommodation, culture, tips, visa info, health, safety, local customs, hidden gems, booking advice, packing tips, language phrases, currency, emergency contacts. Be extremely detailed and comprehensive.`;
+        Respond in ${responseLanguage} language. Provide helpful travel advice in 5-8 sentences. Include destination info, pricing, best times to visit, and practical tips. Be friendly and detailed.`;
         
-        // Add timeout to prevent hanging (increased for longer responses)
+        console.log('Sending AI prompt:', aiPrompt);
+        
+        // Add timeout to prevent hanging
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('AI response timeout')), 30000)
+          setTimeout(() => reject(new Error('AI request timeout')), 15000)
         );
         
         const aiPromise = puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
         const response = await Promise.race([aiPromise, timeoutPromise]);
-        const cleanResponse = cleanAndShortenText(response.message.content[0].text);
-        return cleanResponse;
-      } catch (error) {
-        console.error('AI response error:', error);
-        // Fallback to local travel response if AI fails
-        return getTravelResponse(input, currentLang);
-      }
+        
+        console.log('AI response received:', response);
+        
+        if (response && response.message && response.message.content && response.message.content[0] && response.message.content[0].text) {
+          const cleanResponse = cleanAndShortenText(response.message.content[0].text);
+          console.log('Cleaned response:', cleanResponse);
+          return cleanResponse;
+        } else {
+          console.error('Invalid AI response structure:', response);
+          return getTravelResponse(input, currentLang);
+        }
+              } catch (error) {
+          console.error('AI response error:', error);
+          // Fallback to local travel response if AI fails
+          const fallbackResponse = getTravelResponse(input, currentLang);
+          console.log('Using fallback response:', fallbackResponse);
+          return fallbackResponse;
+        }
     }
 
     function clearConversation() {
@@ -899,7 +916,7 @@
         addConversationItem('user', `I want to know about ${actionText.toLowerCase()}`);
         
         // Show loading state
-        askLoading.textContent = 'Getting AI travel advice... (max 30s)';
+        askLoading.textContent = 'Getting AI travel advice...';
         askLoading.style.display = '';
         
         try {
@@ -982,7 +999,7 @@
       
       recognition.onresult = async (event) => {
         const transcript = event.results[0][0].transcript;
-        askLoading.textContent = 'Getting AI travel advice... (max 30s)';
+        askLoading.textContent = 'Getting AI travel advice...';
         
         // Add user message to conversation
         addConversationItem('user', transcript);
@@ -1064,7 +1081,7 @@
         addConversationItem('user', text);
         
         // Show loading state
-        askLoading.textContent = 'Getting AI travel advice... (max 30s)';
+        askLoading.textContent = 'Getting AI travel advice...';
         askLoading.style.display = '';
         
         try {
