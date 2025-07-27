@@ -27,7 +27,7 @@ Thank you for your interest in contributing to the Travel Agent Bot! This docume
 
 #### Prerequisites
 - Basic knowledge of HTML, CSS, JavaScript
-- Understanding of Web APIs (Speech API, Service Workers)
+- Understanding of Web APIs (Speech API, AI Integration)
 - Familiarity with accessibility standards
 
 #### Development Setup
@@ -96,7 +96,7 @@ Thank you for your interest in contributing to the Travel Agent Bot! This docume
 
 ### Performance Guidelines
 
-- **Service Worker caching** - Optimize for offline use
+
 - **Voice API efficiency** - Minimize API calls
 - **DOM manipulation** - Use efficient methods
 - **Memory management** - Avoid memory leaks

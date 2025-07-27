@@ -4,7 +4,7 @@ This guide covers deploying the Travel Agent Bot to various hosting platforms.
 
 ## 📋 Prerequisites
 
-- **HTTPS Required** - Service workers only work over HTTPS
+- **HTTPS Required** - AI features require secure connection
 - **Modern Browser Support** - Ensure your hosting supports modern browsers
 - **File Permissions** - Ensure all files are accessible
 
@@ -116,7 +116,7 @@ This guide covers deploying the Travel Agent Bot to various hosting platforms.
    - Redirect HTTP to HTTPS
 
 3. **Test functionality**
-   - Verify service worker loads
+   - Verify AI integration loads
    - Test offline features
 
 ## 🔧 Configuration
@@ -146,7 +146,7 @@ No environment variables required - the app is self-contained.
 
 ### Pre-deployment Checklist
 
-- [ ] **HTTPS enabled** - Service worker requirement
+- [ ] **HTTPS enabled** - AI integration requirement
 - [ ] **All files uploaded** - Check file structure
 - [ ] **CORS configured** - If using external APIs
 - [ ] **Cache headers set** - For optimal performance
@@ -165,7 +165,7 @@ No environment variables required - the app is self-contained.
 
 3. **Performance testing**
    - Page load speed
-   - Service worker registration
+   - AI integration verification
    - Offline functionality
 
 4. **Accessibility testing**
@@ -177,7 +177,7 @@ No environment variables required - the app is self-contained.
 
 ### Common Issues
 
-**Service Worker Not Loading:**
+**AI Integration Not Loading:**
 - Ensure HTTPS is enabled
 - Check browser console for errors
 - Verify file paths are correct
@@ -189,7 +189,7 @@ No environment variables required - the app is self-contained.
 
 **Offline Features Not Working:**
 - Clear browser cache
-- Check service worker registration
+- Check AI integration
 - Verify cache strategy in sw.js
 
 **Performance Issues:**
@@ -201,7 +201,7 @@ No environment variables required - the app is self-contained.
 ### Debug Tools
 
 1. **Browser DevTools**
-   - Application tab for service worker
+   - Application tab for AI integration
    - Network tab for caching
    - Console for errors
 

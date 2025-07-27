@@ -21,7 +21,7 @@ A revolutionary AI-powered travel assistant with Puter.js integration, supports 
 
 - **🎯 Voice Command Processing** - Intelligent response system with keyword detection
 - **📱 Responsive Design** - Works perfectly on all devices and screen sizes
-- **🔒 Security** - Input validation, rate limiting, and secure service worker
+- **🔒 Security** - Input validation, rate limiting, and secure AI integration
 - **⚡ Performance** - Optimized for speed and efficiency
 
 ## 🎯 Live Demo
@@ -43,7 +43,7 @@ A revolutionary AI-powered travel assistant with Puter.js integration, supports 
 
 ### Prerequisites
 - Modern web browser (Chrome, Firefox, Safari, Edge)
-- HTTPS connection (required for service worker)
+- HTTPS connection (required for AI features)
 - Microphone access (for voice features)
 
 ### Quick Start
@@ -74,7 +74,7 @@ A revolutionary AI-powered travel assistant with Puter.js integration, supports 
 ### Production Deployment
 
 For production deployment, ensure:
-- HTTPS is enabled (required for service worker)
+- HTTPS is enabled (required for AI features)
 - All files are served from the same domain
 - Proper caching headers are set
 
@@ -194,7 +194,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Web Speech API** - For voice recognition and synthesis
 - **Font Awesome** - For beautiful icons
 - **Inter Font** - For modern typography
-- **Service Workers** - For offline functionality
+
 
 ## 📞 Support
 

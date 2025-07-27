@@ -41,12 +41,19 @@ jobs:
         node -c travel-agent-data.js
         echo "✅ JavaScript syntax is valid"
     
-    - name: Check service worker
+    - name: Check AI integration
       run: |
-        if grep -q "serviceWorker" chat.html; then
-          echo "✅ Service worker is implemented"
+        if grep -q "puter.ai.chat" chat.html; then
+          echo "✅ AI integration is implemented"
         else
-          echo "❌ Service worker is missing"
+          echo "❌ AI integration is missing"
+          exit 1
+        fi
+        
+        if grep -q "userPreferences" chat.html; then
+          echo "✅ User preferences system is implemented"
+        else
+          echo "❌ User preferences system is missing"
           exit 1
         fi
 
