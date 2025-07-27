@@ -502,6 +502,10 @@
     <button class="ask-refresh-btn" id="refreshBtn" tabindex="0">
       <i class="fa-solid fa-rotate-right" style="margin-right:6px;"></i> New Conversation
     </button>
+    
+    <button class="ask-refresh-btn" id="testAiBtn" tabindex="0" style="margin-left:10px; background:linear-gradient(135deg, #10b981 0%, #059669 100%);">
+      <i class="fa-solid fa-robot" style="margin-right:6px;"></i> Test AI
+    </button>
   </div>
 
   <!-- Voice Commands Help -->
@@ -674,6 +678,10 @@
     
     // Test Puter.js availability
     setTimeout(async () => {
+      console.log('Checking Puter.js availability...');
+      console.log('typeof puter:', typeof puter);
+      console.log('puter object:', puter);
+      
       if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
         console.log('✅ Puter.js is available and ready');
         
@@ -705,6 +713,7 @@
         }
       } else {
         console.error('❌ Puter.js is not available');
+        console.log('Available global objects:', Object.keys(window).filter(key => key.includes('puter')));
       }
     }, 2000);
     
@@ -1175,6 +1184,32 @@
         window.speechSynthesis.cancel();
       }
       clearConversation();
+    });
+    
+    // Test AI button
+    const testAiBtn = document.getElementById('testAiBtn');
+    testAiBtn.addEventListener('click', async () => {
+      console.log('Testing AI manually...');
+      addConversationItem('user', 'Testing AI connection...');
+      
+      try {
+        if (typeof puter === 'undefined' || !puter.ai || !puter.ai.chat) {
+          addConversationItem('bot', '❌ Puter.js is not loaded. Please check your internet connection and refresh the page.');
+          return;
+        }
+        
+        const testResponse = await puter.ai.chat('Say "AI is working!" in one sentence.', {model: 'gpt-4.1-nano'});
+        console.log('Manual AI test response:', testResponse);
+        
+        if (testResponse && testResponse.message && testResponse.message.content && testResponse.message.content[0] && testResponse.message.content[0].text) {
+          addConversationItem('bot', `✅ AI Test Successful: ${testResponse.message.content[0].text}`, true, true);
+        } else {
+          addConversationItem('bot', '❌ AI responded but with invalid structure. Check console for details.');
+        }
+      } catch (error) {
+        console.error('Manual AI test failed:', error);
+        addConversationItem('bot', `❌ AI Test Failed: ${error.message || 'Unknown error'}`);
+      }
     });
 
     // Event listeners for accessibility
