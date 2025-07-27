@@ -672,6 +672,23 @@
     // Run test on page load
     testLanguagePreservation();
     
+    // Test Puter.js availability
+    setTimeout(async () => {
+      if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
+        console.log('✅ Puter.js is available and ready');
+        
+        // Test AI with a simple prompt
+        try {
+          const testResponse = await puter.ai.chat('Say "Hello, AI is working!"', {model: 'claude-sonnet-4'});
+          console.log('✅ AI test successful:', testResponse);
+        } catch (error) {
+          console.error('❌ AI test failed:', error);
+        }
+      } else {
+        console.error('❌ Puter.js is not available');
+      }
+    }, 2000);
+    
     // Function to update welcome message based on current language
     function updateWelcomeMessage() {
       const welcomeMessage = document.getElementById('welcomeMessage');
@@ -831,6 +848,12 @@
       
       // Enhanced response system combining AI and local travel data
       try {
+        // Check if Puter.js is available
+        if (typeof puter === 'undefined' || !puter.ai || !puter.ai.chat) {
+          console.error('Puter.js not available, using local response');
+          return getTravelResponse(input, currentLang);
+        }
+        
         // First, get local travel data response
         const localResponse = getTravelResponse(input, currentLang);
         
@@ -866,7 +889,7 @@
         
         // Add timeout to prevent hanging
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('AI request timeout')), 15000)
+          setTimeout(() => reject(new Error('AI request timeout')), 8000)
         );
         
         const aiPromise = puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
