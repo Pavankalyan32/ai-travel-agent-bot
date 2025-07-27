@@ -393,6 +393,9 @@
   <div class="ask-center">
     <div class="ask-title">Murmu</div>
     <div class="ask-desc">AI-powered travel assistant - Ask me about destinations, flights, hotels, and travel tips</div>
+    <div id="ollamaStatus" style="margin-bottom:10px; padding:8px 16px; border-radius:8px; background:#f3f4f6; color:#6b7280; font-size:0.9rem;">
+      <i class="fa-solid fa-circle" style="color:#9ca3af;"></i> Checking Ollama status...
+    </div>
     
     <!-- Real-time Data Display -->
     <div class="realtime-data" id="realtimeData">
@@ -675,19 +678,74 @@
     // Run test on page load
     testLanguagePreservation();
     
+    // Function to update Ollama status indicator
+    function updateOllamaStatus(status, message) {
+      const statusElement = document.getElementById('ollamaStatus');
+      const icon = statusElement.querySelector('i');
+      
+      switch(status) {
+        case 'success':
+          statusElement.style.background = '#d1fae5';
+          statusElement.style.color = '#065f46';
+          icon.style.color = '#10b981';
+          icon.className = 'fa-solid fa-circle-check';
+          break;
+        case 'warning':
+          statusElement.style.background = '#fef3c7';
+          statusElement.style.color = '#92400e';
+          icon.style.color = '#f59e0b';
+          icon.className = 'fa-solid fa-triangle-exclamation';
+          break;
+        case 'error':
+          statusElement.style.background = '#fee2e2';
+          statusElement.style.color = '#991b1b';
+          icon.style.color = '#ef4444';
+          icon.className = 'fa-solid fa-circle-xmark';
+          break;
+        default:
+          statusElement.style.background = '#f3f4f6';
+          statusElement.style.color = '#6b7280';
+          icon.style.color = '#9ca3af';
+          icon.className = 'fa-solid fa-circle';
+      }
+      
+      statusElement.innerHTML = `${icon.outerHTML} ${message}`;
+    }
+
     // Test Ollama availability
     setTimeout(async () => {
       console.log('=== OLLAMA DEBUGGING ===');
       console.log('Checking Ollama availability...');
       
       try {
-        const testResponse = await callOllamaAI('Say "Hello, Ollama is working!"', 'llama3.1:8b');
-        console.log('✅ Ollama test successful:', testResponse);
+        // First, just check if Ollama is running
+        const healthCheck = await fetch('http://localhost:11434/api/tags');
+        if (healthCheck.ok) {
+          const models = await healthCheck.json();
+          console.log('✅ Ollama is running!');
+          console.log('Available models:', models);
+          
+          if (models.models && models.models.length > 0) {
+            updateOllamaStatus('success', `Ollama running with ${models.models.length} model(s)`);
+            const testResponse = await callOllamaAI('Say "Hello, Ollama is working!"', 'llama3.1:8b');
+            console.log('✅ Ollama test successful:', testResponse);
+          } else {
+            updateOllamaStatus('warning', 'Ollama running but no models installed. Run: ollama pull llama3.1:8b');
+            console.log('⚠️ Ollama is running but no models are installed');
+            console.log('Run: ollama pull llama3.1:8b');
+          }
+        } else {
+          updateOllamaStatus('error', 'Ollama not running. Start with: ollama serve');
+          console.error('❌ Ollama is not running');
+          console.log('Start Ollama with: ollama serve');
+        }
       } catch (error) {
+        updateOllamaStatus('error', 'Ollama not accessible. Install from: https://ollama.ai/');
         console.error('❌ Ollama test failed:', error);
         console.log('Make sure Ollama is installed and running on localhost:11434');
         console.log('Install Ollama from: https://ollama.ai/');
-        console.log('Then run: ollama pull llama3.1:8b');
+        console.log('Start Ollama: ollama serve');
+        console.log('Download model: ollama pull llama3.1:8b');
       }
     }, 2000);
     
@@ -696,6 +754,27 @@
       try {
         console.log(`Calling Ollama with model: ${model}`);
         console.log('Prompt:', prompt);
+        
+        // First, check if Ollama is running
+        const healthCheck = await fetch('http://localhost:11434/api/tags', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!healthCheck.ok) {
+          throw new Error(`Ollama not running or not accessible. Status: ${healthCheck.status}`);
+        }
+        
+        const availableModels = await healthCheck.json();
+        console.log('Available models:', availableModels);
+        
+        // Check if the requested model is available
+        const modelExists = availableModels.models?.some(m => m.name === model);
+        if (!modelExists) {
+          throw new Error(`Model ${model} not found. Available models: ${availableModels.models?.map(m => m.name).join(', ') || 'none'}`);
+        }
         
         const response = await fetch('http://localhost:11434/api/generate', {
           method: 'POST',
@@ -715,7 +794,8 @@
         });
         
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
         }
         
         const data = await response.json();
