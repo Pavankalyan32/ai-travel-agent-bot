@@ -686,13 +686,74 @@
           const hindiTest = await puter.ai.chat('Respond in Hindi: "नमस्ते, AI काम कर रहा है!"', {model: 'claude-sonnet-4'});
           console.log('✅ Hindi AI test successful:', hindiTest);
         } catch (error) {
-          console.error('❌ AI test failed:', error);
+          if (error && error.error && error.error.message && error.error.message.includes('usage-limited')) {
+            console.log('⚠️ Puter.js usage limit reached - using enhanced local responses');
+          } else {
+            console.error('❌ AI test failed:', error);
+          }
         }
       } else {
         console.error('❌ Puter.js is not available');
       }
     }, 2000);
     
+    // Enhanced local response function for when AI is not available
+    function getEnhancedLocalResponse(input, lang) {
+      const lowerInput = input.toLowerCase();
+      
+      // Hindi responses
+      if (lang === 'hi-IN') {
+        if (lowerInput.includes('लाल किला') || lowerInput.includes('red fort')) {
+          return 'लाल किला दिल्ली का प्रसिद्ध ऐतिहासिक स्मारक है। यह मुगल वास्तुकला का शानदार उदाहरण है। यहां जाने का सबसे अच्छा समय अक्टूबर से मार्च है। प्रवेश शुल्क भारतीय नागरिकों के लिए 35 रुपये और विदेशी पर्यटकों के लिए 500 रुपये है। सुबह 9 बजे से शाम 5 बजे तक खुला रहता है। सोमवार को बंद रहता है। मेट्रो से जाने के लिए चांदनी चौक स्टेशन उतरें।';
+        }
+        if (lowerInput.includes('ताज महल') || lowerInput.includes('taj mahal')) {
+          return 'ताज महल आगरा में स्थित विश्व के सात अजूबों में से एक है। यह सफेद संगमरमर से बना है और प्रेम का प्रतीक है। सबसे अच्छा समय सूर्योदय और सूर्यास्त के समय है। प्रवेश शुल्क भारतीय नागरिकों के लिए 50 रुपये और विदेशी पर्यटकों के लिए 1100 रुपये है। शुक्रवार को बंद रहता है। आगरा किला भी देखना न भूलें।';
+        }
+        if (lowerInput.includes('गोवा') || lowerInput.includes('goa')) {
+          return 'गोवा भारत का सबसे लोकप्रिय समुद्र तटीय राज्य है। यहां सुंदर समुद्र तट, पुर्तगाली वास्तुकला और स्वादिष्ट भोजन मिलता है। नवंबर से मार्च सबसे अच्छा समय है। होटल की कीमत 2000-8000 रुपये प्रति रात है। पणजी, कैंडोलिम और बागा समुद्र तट देखें। स्थानीय भोजन और समुद्री भोजन जरूर खाएं।';
+        }
+        return getTravelResponse(input, lang);
+      }
+      
+      // Russian responses
+      if (lang === 'ru-RU') {
+        if (lowerInput.includes('москва') || lowerInput.includes('moscow')) {
+          return 'Москва - столица России и один из самых красивых городов мира. Красная площадь, Кремль и собор Василия Блаженного - главные достопримечательности. Лучшее время для посещения - май-сентябрь. Стоимость отелей от 3000 до 15000 рублей за ночь. Обязательно посетите Третьяковскую галерею и парк Горького.';
+        }
+        if (lowerInput.includes('санкт-петербург') || lowerInput.includes('st petersburg')) {
+          return 'Санкт-Петербург - культурная столица России. Эрмитаж, Петергоф и Исаакиевский собор - основные достопримечательности. Лучшее время - июнь-август для белых ночей. Стоимость проживания от 2500 до 12000 рублей. Обязательно совершите прогулку по каналам.';
+        }
+        return getTravelResponse(input, lang);
+      }
+      
+      // Japanese responses
+      if (lang === 'ja-JP') {
+        if (lowerInput.includes('東京') || lowerInput.includes('tokyo')) {
+          return '東京は日本の首都で、世界最大の都市の一つです。浅草寺、東京スカイツリー、渋谷スクランブル交差点が人気の観光スポットです。春（桜）と秋（紅葉）が最も美しい季節です。ホテル代は1泊8000円から30000円です。電車と地下鉄が便利です。';
+        }
+        if (lowerInput.includes('京都') || lowerInput.includes('kyoto')) {
+          return '京都は日本の古都で、多くの寺院と神社があります。金閣寺、清水寺、伏見稲荷大社が有名です。春と秋が最も美しい季節です。ホテル代は1泊6000円から25000円です。着物を着て散策することをお勧めします。';
+        }
+        return getTravelResponse(input, lang);
+      }
+      
+      // English responses (enhanced)
+      if (lowerInput.includes('paris') || lowerInput.includes('france')) {
+        return 'Paris is the romantic capital of France, famous for the Eiffel Tower, Louvre Museum, and Notre-Dame Cathedral. Best time to visit is April-June or September-October. Hotel prices range from $150-500 per night. Must-see attractions include the Arc de Triomphe, Champs-Élysées, and Montmartre. Try local cuisine like croissants, escargot, and French wine.';
+      }
+      if (lowerInput.includes('london') || lowerInput.includes('england')) {
+        return 'London is the historic capital of England, home to Big Ben, Buckingham Palace, and the Tower of London. Best time to visit is March-May or September-November. Hotel prices range from $200-600 per night. Don\'t miss the British Museum, Westminster Abbey, and a ride on the London Eye. Try traditional fish and chips and afternoon tea.';
+      }
+      if (lowerInput.includes('new york') || lowerInput.includes('nyc')) {
+        return 'New York City is the vibrant metropolis of the USA, famous for Times Square, Statue of Liberty, and Central Park. Best time to visit is April-June or September-November. Hotel prices range from $250-800 per night. Must-see attractions include Broadway shows, Empire State Building, and Brooklyn Bridge. Try New York pizza and bagels.';
+      }
+      if (lowerInput.includes('tokyo') || lowerInput.includes('japan')) {
+        return 'Tokyo is Japan\'s bustling capital, known for its modern technology and traditional culture. Best time to visit is March-May for cherry blossoms or October-November for autumn colors. Hotel prices range from $100-400 per night. Visit Senso-ji Temple, Tokyo Skytree, and Shibuya Crossing. Try sushi, ramen, and tempura.';
+      }
+      
+      return getTravelResponse(input, lang);
+    }
+
     // Function to update welcome message based on current language
     function updateWelcomeMessage() {
       const welcomeMessage = document.getElementById('welcomeMessage');
@@ -852,10 +913,10 @@
       
       // Enhanced response system combining AI and local travel data
       try {
-        // Check if Puter.js is available
+        // Check if Puter.js is available and not rate limited
         if (typeof puter === 'undefined' || !puter.ai || !puter.ai.chat) {
-          console.error('Puter.js not available, using local response');
-          return getTravelResponse(input, currentLang);
+          console.error('Puter.js not available, using enhanced local response');
+          return getEnhancedLocalResponse(input, currentLang);
         }
         
         // First, get local travel data response
@@ -917,21 +978,21 @@
           return cleanResponse;
         } else {
           console.error('Invalid AI response structure:', response);
-          console.log('Falling back to local response');
-          return getTravelResponse(input, currentLang);
+          console.log('Falling back to enhanced local response');
+          return getEnhancedLocalResponse(input, currentLang);
         }
               } catch (error) {
           console.error('AI response error:', error);
-          // Fallback to local travel response if AI fails
-          const fallbackResponse = getTravelResponse(input, currentLang);
-          console.log('Using fallback response:', fallbackResponse);
+          // Check if it's a usage limit error
+          if (error && error.error && error.error.message && error.error.message.includes('usage-limited')) {
+            console.log('Puter.js usage limit reached, using enhanced local responses');
+            return getEnhancedLocalResponse(input, currentLang);
+          }
           
-          // Add a note that AI is not available
-          const aiNote = currentLang === 'hi-IN' ? ' (AI सहायता उपलब्ध नहीं है)' : 
-                        currentLang === 'ru-RU' ? ' (ИИ недоступен)' :
-                        currentLang === 'ja-JP' ? ' (AI利用不可)' : ' (AI assistance unavailable)';
-          
-          return fallbackResponse + aiNote;
+          // Fallback to enhanced local response
+          const fallbackResponse = getEnhancedLocalResponse(input, currentLang);
+          console.log('Using enhanced fallback response:', fallbackResponse);
+          return fallbackResponse;
         }
     }
 
