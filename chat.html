@@ -681,6 +681,10 @@
         try {
           const testResponse = await puter.ai.chat('Say "Hello, AI is working!"', {model: 'claude-sonnet-4'});
           console.log('✅ AI test successful:', testResponse);
+          
+          // Test Hindi response
+          const hindiTest = await puter.ai.chat('Respond in Hindi: "नमस्ते, AI काम कर रहा है!"', {model: 'claude-sonnet-4'});
+          console.log('✅ Hindi AI test successful:', hindiTest);
         } catch (error) {
           console.error('❌ AI test failed:', error);
         }
@@ -896,6 +900,16 @@
         const response = await Promise.race([aiPromise, timeoutPromise]);
         
         console.log('AI response received:', response);
+        console.log('Response type:', typeof response);
+        console.log('Response keys:', Object.keys(response || {}));
+        
+        if (response && response.message) {
+          console.log('Message keys:', Object.keys(response.message || {}));
+          if (response.message.content) {
+            console.log('Content length:', response.message.content.length);
+            console.log('First content item:', response.message.content[0]);
+          }
+        }
         
         if (response && response.message && response.message.content && response.message.content[0] && response.message.content[0].text) {
           const cleanResponse = cleanAndShortenText(response.message.content[0].text);
@@ -903,6 +917,7 @@
           return cleanResponse;
         } else {
           console.error('Invalid AI response structure:', response);
+          console.log('Falling back to local response');
           return getTravelResponse(input, currentLang);
         }
               } catch (error) {
@@ -910,7 +925,13 @@
           // Fallback to local travel response if AI fails
           const fallbackResponse = getTravelResponse(input, currentLang);
           console.log('Using fallback response:', fallbackResponse);
-          return fallbackResponse;
+          
+          // Add a note that AI is not available
+          const aiNote = currentLang === 'hi-IN' ? ' (AI सहायता उपलब्ध नहीं है)' : 
+                        currentLang === 'ru-RU' ? ' (ИИ недоступен)' :
+                        currentLang === 'ja-JP' ? ' (AI利用不可)' : ' (AI assistance unavailable)';
+          
+          return fallbackResponse + aiNote;
         }
     }
 
