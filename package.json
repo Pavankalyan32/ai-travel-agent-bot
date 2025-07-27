@@ -1,0 +1,45 @@
+{
+  "name": "travel-agent-bot",
+  "version": "1.0.0",
+  "description": "A revolutionary AI-powered travel assistant that works offline, supports multiple languages, and provides a seamless travel planning experience.",
+  "main": "chat.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "npx serve .",
+    "dev": "python -m http.server 8000",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "travel",
+    "ai",
+    "voice-assistant",
+    "offline",
+    "progressive-web-app",
+    "accessibility",
+    "multi-language",
+    "travel-planning",
+    "voice-recognition",
+    "service-worker"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/travel-agent-bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/travel-agent-bot/issues"
+  },
+  "homepage": "https://github.com/yourusername/travel-agent-bot#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+} 

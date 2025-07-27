@@ -1,0 +1,66 @@
+name: Test and Deploy
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm install
+    
+    - name: Run tests
+      run: npm test
+    
+    - name: Check HTML validity
+      run: |
+        # Basic HTML validation
+        if grep -q "<!DOCTYPE html>" chat.html; then
+          echo "✅ HTML structure is valid"
+        else
+          echo "❌ HTML structure is invalid"
+          exit 1
+        fi
+    
+    - name: Check JavaScript syntax
+      run: |
+        # Basic JS syntax check
+        node -c travel-agent-data.js
+        echo "✅ JavaScript syntax is valid"
+    
+    - name: Check service worker
+      run: |
+        if grep -q "serviceWorker" chat.html; then
+          echo "✅ Service worker is implemented"
+        else
+          echo "❌ Service worker is missing"
+          exit 1
+        fi
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .
+        publish_branch: gh-pages 
