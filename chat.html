@@ -678,38 +678,28 @@
     
     // Test Puter.js availability
     setTimeout(async () => {
+      console.log('=== PUTER.JS DEBUGGING ===');
       console.log('Checking Puter.js availability...');
       console.log('typeof puter:', typeof puter);
       console.log('puter object:', puter);
+      console.log('puter.ai:', puter?.ai);
+      console.log('puter.ai.chat:', puter?.ai?.chat);
+      console.log('Script loaded from:', document.querySelector('script[src*="puter.com"]')?.src);
       
       if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
         console.log('✅ Puter.js is available and ready');
         
-        // Test AI with different models
-        const testModels = ['gpt-4.1-nano', 'gpt-4o', 'o3-mini', 'claude-sonnet-4'];
-        let testSuccessful = false;
-        
-        for (const model of testModels) {
-          try {
-            console.log(`Testing model: ${model}`);
-            const testResponse = await puter.ai.chat('Say "Hello, AI is working!"', {model: model});
-            console.log(`✅ AI test successful with ${model}:`, testResponse);
-            
-            // Test Hindi response with the working model
-            const hindiTest = await puter.ai.chat('Respond in Hindi: "नमस्ते, AI काम कर रहा है!"', {model: model});
-            console.log(`✅ Hindi AI test successful with ${model}:`, hindiTest);
-            testSuccessful = true;
-            break;
-          } catch (error) {
-            console.log(`❌ Failed with model ${model}:`, error);
-            if (model === testModels[testModels.length - 1]) {
-              if (error && error.error && error.error.message && error.error.message.includes('usage-limited')) {
-                console.log('⚠️ Puter.js usage limit reached - using enhanced local responses');
-              } else {
-                console.error('❌ All AI models failed');
-              }
-            }
-          }
+        // Test Claude Sonnet 4 as recommended by Puter.js
+        try {
+          console.log('Testing Claude Sonnet 4 model');
+          const testResponse = await puter.ai.chat('Say "Hello, AI is working!"', {model: 'claude-sonnet-4'});
+          console.log('✅ Claude Sonnet 4 test successful:', testResponse);
+          
+          // Test Hindi response
+          const hindiTest = await puter.ai.chat('Respond in Hindi: "नमस्ते, AI काम कर रहा है!"', {model: 'claude-sonnet-4'});
+          console.log('✅ Hindi AI test successful:', hindiTest);
+        } catch (error) {
+          console.error('❌ Claude Sonnet 4 test failed:', error);
         }
       } else {
         console.error('❌ Puter.js is not available');
@@ -977,24 +967,10 @@
           setTimeout(() => reject(new Error('AI request timeout')), 8000)
         );
         
-        // Try different models in order of preference
-        let response;
-        const models = ['gpt-4.1-nano', 'gpt-4o', 'o3-mini', 'claude-sonnet-4'];
-        
-        for (const model of models) {
-          try {
-            console.log(`Trying model: ${model}`);
-            const aiPromise = puter.ai.chat(aiPrompt, {model: model});
-            response = await Promise.race([aiPromise, timeoutPromise]);
-            console.log(`✅ Success with model: ${model}`);
-            break;
-          } catch (modelError) {
-            console.log(`❌ Failed with model ${model}:`, modelError);
-            if (model === models[models.length - 1]) {
-              throw modelError; // Re-throw if all models fail
-            }
-          }
-        }
+        // Use Claude Sonnet 4 as recommended by Puter.js documentation
+        console.log('Using Claude Sonnet 4 model');
+        const aiPromise = puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
+        const response = await Promise.race([aiPromise, timeoutPromise]);
         
         console.log('AI response received:', response);
         console.log('Response type:', typeof response);
@@ -1021,7 +997,7 @@
           console.error('AI response error:', error);
           // Check if it's a usage limit error
           if (error && error.error && error.error.message && error.error.message.includes('usage-limited')) {
-            console.log('Puter.js usage limit reached, using enhanced local responses');
+            console.log('Claude API usage limit reached, using enhanced local responses');
             return getEnhancedLocalResponse(input, currentLang);
           }
           
@@ -1198,7 +1174,7 @@
           return;
         }
         
-        const testResponse = await puter.ai.chat('Say "AI is working!" in one sentence.', {model: 'gpt-4.1-nano'});
+        const testResponse = await puter.ai.chat('Say "AI is working!" in one sentence.', {model: 'claude-sonnet-4'});
         console.log('Manual AI test response:', testResponse);
         
         if (testResponse && testResponse.message && testResponse.message.content && testResponse.message.content[0] && testResponse.message.content[0].text) {
