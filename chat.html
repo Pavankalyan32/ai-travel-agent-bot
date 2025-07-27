@@ -686,12 +686,29 @@
       console.log('puter.ai.chat:', puter?.ai?.chat);
       console.log('Script loaded from:', document.querySelector('script[src*="puter.com"]')?.src);
       
+      // Test if puter.print exists (basic functionality)
+      if (typeof puter?.print === 'function') {
+        console.log('✅ puter.print is available');
+        try {
+          puter.print('Testing puter.print functionality...');
+        } catch (e) {
+          console.error('❌ puter.print failed:', e);
+        }
+      } else {
+        console.error('❌ puter.print is not available');
+      }
+      
       if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
         console.log('✅ Puter.js is available and ready');
         
         // Test Claude Sonnet 4 as recommended by Puter.js
         try {
           console.log('Testing Claude Sonnet 4 model');
+          
+          // First, test with the exact example from documentation
+          const basicTest = await puter.ai.chat("Explain quantum computing in simple terms", {model: 'claude-sonnet-4'});
+          console.log('✅ Basic test successful:', basicTest);
+          
           const testResponse = await puter.ai.chat('Say "Hello, AI is working!"', {model: 'claude-sonnet-4'});
           console.log('✅ Claude Sonnet 4 test successful:', testResponse);
           
@@ -700,6 +717,10 @@
           console.log('✅ Hindi AI test successful:', hindiTest);
         } catch (error) {
           console.error('❌ Claude Sonnet 4 test failed:', error);
+          console.error('Error type:', typeof error);
+          console.error('Error keys:', Object.keys(error || {}));
+          console.error('Error message:', error?.message);
+          console.error('Error stack:', error?.stack);
         }
       } else {
         console.error('❌ Puter.js is not available');
@@ -1182,10 +1203,14 @@
         } else {
           addConversationItem('bot', '❌ AI responded but with invalid structure. Check console for details.');
         }
-      } catch (error) {
-        console.error('Manual AI test failed:', error);
-        addConversationItem('bot', `❌ AI Test Failed: ${error.message || 'Unknown error'}`);
-      }
+              } catch (error) {
+          console.error('Manual AI test failed:', error);
+          console.error('Error type:', typeof error);
+          console.error('Error keys:', Object.keys(error || {}));
+          console.error('Error message:', error?.message);
+          console.error('Error stack:', error?.stack);
+          addConversationItem('bot', `❌ AI Test Failed: ${error.message || 'Unknown error'}`);
+        }
     });
 
     // Event listeners for accessibility
