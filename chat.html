@@ -597,23 +597,22 @@
       const shortSentences = sentences.map(sentence => {
         let short = sentence.trim();
         
-        // Break very long sentences
-        if (short.length > 80) {
+        // Break very long sentences but allow longer content
+        if (short.length > 120) {
           const parts = short.split(/[,;]/);
           if (parts.length > 1) {
             short = parts[0].trim();
           }
         }
         
-        // Remove unnecessary words
+        // Remove only the most unnecessary words, keep more content
         short = short.replace(/\b(very|really|quite|extremely|absolutely)\b/gi, '');
-        short = short.replace(/\b(actually|basically|essentially|literally)\b/gi, '');
         
         return short;
       });
       
-      // Limit to 3 sentences maximum
-      const finalSentences = shortSentences.slice(0, 3);
+      // Limit to 6 sentences maximum for comprehensive responses
+      const finalSentences = shortSentences.slice(0, 6);
       
       // Join and clean up
       let result = finalSentences.join('. ').trim();
@@ -869,9 +868,11 @@
         
         IMPORTANT: Respond in ${responseLanguage} language. If the user is speaking in ${responseLanguage}, you must respond in ${responseLanguage}.
         
-        Enhance the local response with additional AI insights. Keep it under 3 sentences. 
-        Be friendly and provide practical tips. If the local response is good, build upon it.
-        If user has preferences set, tailor your recommendations accordingly.
+        Enhance the local response with additional AI insights. Provide comprehensive, detailed information in 4-6 sentences. 
+        Be friendly and provide practical tips, specific recommendations, pricing information, best times to visit, and useful details. 
+        If the local response is good, build upon it with more context, examples, and actionable advice.
+        If user has preferences set, tailor your recommendations accordingly with personalized suggestions and alternatives.
+        Include specific details about costs, timing, requirements, and insider tips when relevant.
         Use only plain text, no emojis or symbols, but preserve international characters for different languages.`;
         
         const response = await puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
