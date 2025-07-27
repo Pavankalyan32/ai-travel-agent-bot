@@ -527,6 +527,10 @@
     <button class="ask-refresh-btn" id="refreshBtn" tabindex="0">
       <i class="fa-solid fa-rotate-right" style="margin-right:6px;"></i> New Conversation
     </button>
+    
+    <button class="ask-refresh-btn" id="voiceTestBtn" tabindex="0" style="margin-left:10px; background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+      <i class="fa-solid fa-volume-high" style="margin-right:6px;"></i> Test Voice
+    </button>
   </div>
 
   <!-- Voice Commands Help -->
@@ -551,6 +555,7 @@
     const askLoading = document.getElementById('askLoading');
     const langSelect = document.getElementById('langSelect');
     const refreshBtn = document.getElementById('refreshBtn');
+    const voiceTestBtn = document.getElementById('voiceTestBtn');
     const conversationContainer = document.getElementById('conversationContainer');
     const statusIndicator = document.getElementById('statusIndicator');
     const quickButtons = document.querySelectorAll('.quick-btn');
@@ -990,7 +995,7 @@
       });
     });
 
-    // Speak response function
+    // Enhanced speak response function with better language support
     function speakResponse(text) {
       if ('speechSynthesis' in window) {
         // Clean text for speech synthesis
@@ -998,6 +1003,10 @@
         
         const utter = new window.SpeechSynthesisUtterance(speechText);
         utter.lang = currentLang;
+        utter.rate = 0.9; // Slightly slower for better clarity
+        utter.pitch = 1.0;
+        utter.volume = 1.0;
+        
         utter.onstart = () => { 
           micBtn.disabled = true; 
           statusIndicator.classList.add('recording');
@@ -1006,15 +1015,52 @@
           micBtn.disabled = false; 
           statusIndicator.classList.remove('recording');
         };
-        window.speechSynthesis.onvoiceschanged = () => {
+        utter.onerror = (event) => {
+          console.log('Speech synthesis error:', event.error);
+          micBtn.disabled = false;
+          statusIndicator.classList.remove('recording');
+        };
+        
+        // Function to find the best available voice
+        function findBestVoice(lang) {
           const voices = window.speechSynthesis.getVoices();
-          utter.voice = voices.find(v => v.lang === currentLang) || null;
+          
+          // First try to find exact language match
+          let voice = voices.find(v => v.lang === lang);
+          
+          // If not found, try to find similar language
+          if (!voice) {
+            const langCode = lang.split('-')[0];
+            voice = voices.find(v => v.lang.startsWith(langCode));
+          }
+          
+          // If still not found, try to find any voice
+          if (!voice && voices.length > 0) {
+            voice = voices[0];
+          }
+          
+          return voice;
+        }
+        
+        // Set up voice selection
+        const setupVoice = () => {
+          const voice = findBestVoice(currentLang);
+          if (voice) {
+            utter.voice = voice;
+            console.log(`Using voice: ${voice.name} (${voice.lang})`);
+          } else {
+            console.log('No suitable voice found, using default');
+          }
           window.speechSynthesis.speak(utter);
         };
+        
+        // Check if voices are already loaded
         const voices = window.speechSynthesis.getVoices();
-        if (voices.length) {
-          utter.voice = voices.find(v => v.lang === currentLang) || null;
-          window.speechSynthesis.speak(utter);
+        if (voices.length > 0) {
+          setupVoice();
+        } else {
+          // Wait for voices to load
+          window.speechSynthesis.onvoiceschanged = setupVoice;
         }
       }
     }
@@ -1022,9 +1068,19 @@
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRecognition();
-      recognition.lang = currentLang;
+      
+      // Enhanced language mapping for better voice recognition
+      const languageMap = {
+        'en-US': 'en-US',
+        'hi-IN': 'hi-IN',
+        'ru-RU': 'ru-RU', 
+        'ja-JP': 'ja-JP'
+      };
+      
+      recognition.lang = languageMap[currentLang] || 'en-US';
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
+      recognition.continuous = false;
 
       recognition.onstart = () => {
         recognizing = true;
@@ -1075,15 +1131,41 @@
 
       langSelect.addEventListener('change', () => {
         currentLang = langSelect.value;
-        recognition.lang = currentLang;
+        
+        // Update recognition language with proper mapping
+        const languageMap = {
+          'en-US': 'en-US',
+          'hi-IN': 'hi-IN',
+          'ru-RU': 'ru-RU', 
+          'ja-JP': 'ja-JP'
+        };
+        recognition.lang = languageMap[currentLang] || 'en-US';
         
         // Update the welcome message when language changes
         updateWelcomeMessage();
+        
+        // Show language change notification
+        showKeyboardHint(`Language changed to ${langSelect.options[langSelect.selectedIndex].text}`);
       });
     } else {
       micBtn.disabled = true;
       addConversationItem('bot', 'Sorry, your browser does not support voice input.');
     }
+    
+    // Check voice availability on page load
+    setTimeout(() => {
+      if ('speechSynthesis' in window) {
+        const voices = window.speechSynthesis.getVoices();
+        const availableLanguages = voices.map(v => v.lang).filter((v, i, a) => a.indexOf(v) === i);
+        console.log('Available speech synthesis languages:', availableLanguages);
+        
+        // Check if current language is supported
+        const currentVoice = voices.find(v => v.lang === currentLang);
+        if (!currentVoice) {
+          console.log(`Voice not available for ${currentLang}, available:`, availableLanguages);
+        }
+      }
+    }, 1000);
 
     micBtn.addEventListener('click', () => {
       if (recognition && !recognizing) {
@@ -1096,6 +1178,21 @@
         window.speechSynthesis.cancel();
       }
       clearConversation();
+    });
+    
+    // Voice test button
+    voiceTestBtn.addEventListener('click', () => {
+      const testMessages = {
+        'en-US': 'Hello! Voice is working in English.',
+        'hi-IN': 'नमस्ते! आवाज हिंदी में काम कर रही है।',
+        'ru-RU': 'Привет! Голос работает на русском языке.',
+        'ja-JP': 'こんにちは！音声は日本語で動作しています。'
+      };
+      
+      const testMessage = testMessages[currentLang] || testMessages['en-US'];
+      addConversationItem('user', 'Testing voice...');
+      addConversationItem('bot', testMessage);
+      speakResponse(testMessage);
     });
 
     // Event listeners for accessibility
