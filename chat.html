@@ -278,6 +278,16 @@
     .ai-indicator i {
       margin-right: 4px;
     }
+    .enhanced-indicator {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 0.8rem;
+      color: #8b5cf6;
+      font-weight: 600;
+    }
+    .enhanced-indicator i {
+      margin-right: 4px;
+    }
     .ask-refresh-btn {
       margin-top: 16px;
       background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
@@ -683,19 +693,24 @@
     }
 
     // Add conversation item
-    function addConversationItem(speaker, text, isAI = false) {
+    function addConversationItem(speaker, text, isAI = false, isEnhanced = false) {
       const item = document.createElement('div');
       item.className = `conversation-item ${speaker}`;
-      const aiIndicator = isAI ? '<span class="ai-indicator"><i class="fa-solid fa-robot"></i>AI</span>' : '';
+      let indicator = '';
+      if (isEnhanced) {
+        indicator = '<span class="enhanced-indicator"><i class="fa-solid fa-brain"></i>Enhanced</span>';
+      } else if (isAI) {
+        indicator = '<span class="ai-indicator"><i class="fa-solid fa-robot"></i>AI</span>';
+      }
       item.innerHTML = `
-        <div class="conversation-label">${speaker === 'user' ? 'You' : 'AI Travel Agent'}${aiIndicator}</div>
+        <div class="conversation-label">${speaker === 'user' ? 'You' : 'AI Travel Agent'}${indicator}</div>
         <div class="conversation-text">${text}</div>
       `;
       conversationContainer.appendChild(item);
       conversationContainer.scrollTop = conversationContainer.scrollHeight;
       
       // Store in history
-      conversationHistory.push({ speaker, text, timestamp: new Date(), isAI });
+      conversationHistory.push({ speaker, text, timestamp: new Date(), isAI, isEnhanced });
     }
 
     // Enhanced voice command processing with Puter.js AI
@@ -748,8 +763,11 @@
         }
       }
       
-      // Use Puter.js AI for intelligent travel responses with context
+      // Enhanced response system combining AI and local travel data
       try {
+        // First, get local travel data response
+        const localResponse = getTravelResponse(input, currentLang);
+        
         // Build conversation context from recent history
         const recentHistory = conversationHistory.slice(-3).map(item => 
           `${item.speaker === 'user' ? 'User' : 'Assistant'}: ${item.text}`
@@ -772,9 +790,10 @@
         
         Current user question: "${input}"
         
-        Provide a concise, helpful response with short sentences. Keep it under 3 sentences. 
-        Focus on practical tips and clear advice. Be friendly but brief.
-        If the user is asking follow-up questions, reference the previous context.
+        Local travel data response: "${localResponse}"
+        
+        Enhance the local response with additional AI insights. Keep it under 3 sentences. 
+        Be friendly and provide practical tips. If the local response is good, build upon it.
         If user has preferences set, tailor your recommendations accordingly.`;
         
         const response = await puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
@@ -782,7 +801,7 @@
         return cleanResponse;
       } catch (error) {
         console.error('AI response error:', error);
-        // Fallback to regular travel response if AI fails
+        // Fallback to local travel response if AI fails
         return getTravelResponse(input, currentLang);
       }
     }
@@ -813,14 +832,14 @@
         askLoading.style.display = '';
         
         try {
-          // Get AI-enhanced response
+          // Get enhanced response combining AI and local data
           const response = await processVoiceCommand(`Give me brief tips about ${actionText.toLowerCase()} for travel`);
-          addConversationItem('bot', response, true); // Mark as AI response
+          addConversationItem('bot', response, true, true); // Mark as enhanced AI response
           
           // Speak the response
           speakResponse(response);
         } catch (error) {
-          // Fallback to regular response
+          // Fallback to local travel data response
           const response = getTravelResponse(action, currentLang);
           addConversationItem('bot', response);
           speakResponse(response);
@@ -897,7 +916,7 @@
         try {
           // Process voice command or get AI-powered travel agent response
           const response = await processVoiceCommand(transcript);
-          addConversationItem('bot', response, true); // Mark as AI response
+          addConversationItem('bot', response, true, true); // Mark as enhanced AI response
           askLoading.style.display = 'none';
           askResult.style.display = '';
 
@@ -972,11 +991,11 @@
         askLoading.style.display = '';
         
         try {
-          // Get AI-enhanced response
+          // Get enhanced response combining AI and local data
           const response = await processVoiceCommand(text);
-          addConversationItem('bot', response, true); // Mark as AI response
+          addConversationItem('bot', response, true, true); // Mark as enhanced AI response
         } catch (error) {
-          // Fallback to regular response
+          // Fallback to local travel data response
           const response = getTravelResponse(text, currentLang);
           addConversationItem('bot', response);
         } finally {
