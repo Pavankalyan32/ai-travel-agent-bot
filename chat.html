@@ -580,13 +580,9 @@
       // Remove emojis and special symbols but preserve international characters
       cleaned = cleaned.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
       
-      // Remove common AI artifacts and formal language
-      cleaned = cleaned.replace(/^(Here's|Here is|I'll|I will|Let me|Based on|According to|I can|I would|I'd)/gi, '');
-      cleaned = cleaned.replace(/(\.|,|!|\?)\s*(Here's|Here is|I'll|I will|Let me|Based on|According to|I can|I would|I'd)/gi, '$1');
-      
-      // Remove redundant phrases
-      cleaned = cleaned.replace(/\b(please note that|it's worth noting that|it's important to|keep in mind that|remember that)\b/gi, '');
-      cleaned = cleaned.replace(/\b(in terms of|when it comes to|as far as|regarding|concerning)\b/gi, '');
+              // Remove only the most common AI artifacts for speed
+        cleaned = cleaned.replace(/^(Here's|Here is|I'll|I will|Let me)/gi, '');
+        cleaned = cleaned.replace(/(\.|,|!|\?)\s*(Here's|Here is|I'll|I will|Let me)/gi, '$1');
       
       // Remove bullet points and list markers
       cleaned = cleaned.replace(/^[\s•\-\*]+/gm, '');
@@ -597,8 +593,8 @@
       const shortSentences = sentences.map(sentence => {
         let short = sentence.trim();
         
-        // Allow longer sentences for detailed responses
-        if (short.length > 150) {
+        // Allow moderate sentence length for faster processing
+        if (short.length > 120) {
           const parts = short.split(/[,;]/);
           if (parts.length > 1) {
             short = parts[0].trim();
@@ -612,8 +608,8 @@
         return short;
       });
       
-      // Limit to 10 sentences for detailed but manageable responses
-      const finalSentences = shortSentences.slice(0, 10);
+      // Limit to 8 sentences for faster responses
+      const finalSentences = shortSentences.slice(0, 8);
       
       // Join and clean up
       let result = finalSentences.join('. ').trim();
@@ -834,8 +830,8 @@
         // First, get local travel data response
         const localResponse = getTravelResponse(input, currentLang);
         
-        // Build conversation context from recent history
-        const recentHistory = conversationHistory.slice(-3).map(item => 
+        // Build conversation context from recent history (limit to last 2 for speed)
+        const recentHistory = conversationHistory.slice(-2).map(item => 
           `${item.speaker === 'user' ? 'User' : 'Assistant'}: ${item.text}`
         ).join('\n');
         
@@ -856,37 +852,19 @@
           default: responseLanguage = 'English'; break;
         }
         
-        const aiPrompt = `You are a helpful travel agent assistant. 
+        const aiPrompt = `Travel agent: Respond in ${responseLanguage}. User: "${input}". Local data: "${localResponse}". 
         
-        User Preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None set'}
+        Preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None'}
         
-        Recent conversation context:
-        ${recentHistory}
+        Provide 6-8 sentences with: highlights, pricing, timing, weather, transport, accommodation, culture, tips. Be helpful and concise.`;
         
-        Current user question: "${input}"
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('AI response timeout')), 15000)
+        );
         
-        Local travel data response: "${localResponse}"
-        
-        IMPORTANT: Respond in ${responseLanguage} language. If the user is speaking in ${responseLanguage}, you must respond in ${responseLanguage}.
-        
-        Enhance the local response with detailed AI insights. Provide comprehensive information in 8-10 sentences.
-        
-        Include detailed information about:
-        - Destination highlights and attractions
-        - Pricing and budget considerations
-        - Best times to visit
-        - Weather and climate
-        - Transportation options
-        - Accommodation recommendations
-        - Local customs and culture
-        - Practical tips and advice
-        
-        If user has preferences set, provide personalized suggestions with explanations.
-        
-        Be friendly, detailed, and helpful. Provide the most useful travel advice possible.
-        Use only plain text, no emojis or symbols, but preserve international characters for different languages.`;
-        
-        const response = await puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
+        const aiPromise = puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
+        const response = await Promise.race([aiPromise, timeoutPromise]);
         const cleanResponse = cleanAndShortenText(response.message.content[0].text);
         return cleanResponse;
       } catch (error) {
@@ -921,7 +899,7 @@
         addConversationItem('user', `I want to know about ${actionText.toLowerCase()}`);
         
         // Show loading state
-        askLoading.textContent = 'Getting AI travel advice...';
+        askLoading.textContent = 'Getting AI travel advice... (max 15s)';
         askLoading.style.display = '';
         
         try {
@@ -1004,7 +982,7 @@
       
       recognition.onresult = async (event) => {
         const transcript = event.results[0][0].transcript;
-        askLoading.textContent = 'Getting AI travel advice...';
+        askLoading.textContent = 'Getting AI travel advice... (max 15s)';
         
         // Add user message to conversation
         addConversationItem('user', transcript);
@@ -1086,7 +1064,7 @@
         addConversationItem('user', text);
         
         // Show loading state
-        askLoading.textContent = 'Getting AI travel advice...';
+        askLoading.textContent = 'Getting AI travel advice... (max 15s)';
         askLoading.style.display = '';
         
         try {
