@@ -552,6 +552,25 @@
       familyTravel: false
     };
 
+    // Function to clean text for speech synthesis
+    function cleanTextForSpeech(text) {
+      if (!text) return '';
+      
+      // Remove emojis and special symbols
+      let cleaned = text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+      cleaned = cleaned.replace(/[^\w\s.,!?;:()\-'"]/g, '');
+      
+      // Remove bullet points and list markers
+      cleaned = cleaned.replace(/^[\s•\-\*]+/gm, '');
+      cleaned = cleaned.replace(/^\d+\.\s*/gm, '');
+      
+      // Clean up spacing
+      cleaned = cleaned.replace(/\s+/g, ' ');
+      cleaned = cleaned.replace(/\s+([.,!?])/g, '$1');
+      
+      return cleaned.trim();
+    }
+
     // Text cleaning and shortening function
     function cleanAndShortenText(text) {
       if (!text) return '';
@@ -712,8 +731,8 @@
         indicator = '<span class="ai-indicator"><i class="fa-solid fa-robot"></i>AI</span>';
       }
       
-      // Clean the text for display (remove any remaining emojis/symbols)
-      const cleanText = text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+      // Clean the text for display
+      const cleanText = cleanTextForSpeech(text);
       
       item.innerHTML = `
         <div class="conversation-label">${speaker === 'user' ? 'You' : 'AI Travel Agent'}${indicator}</div>
@@ -866,7 +885,10 @@
     // Speak response function
     function speakResponse(text) {
       if ('speechSynthesis' in window) {
-        const utter = new window.SpeechSynthesisUtterance(text);
+        // Clean text for speech synthesis
+        const speechText = cleanTextForSpeech(text);
+        
+        const utter = new window.SpeechSynthesisUtterance(speechText);
         utter.lang = currentLang;
         utter.onstart = () => { 
           micBtn.disabled = true; 
