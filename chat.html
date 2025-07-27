@@ -597,8 +597,8 @@
       const shortSentences = sentences.map(sentence => {
         let short = sentence.trim();
         
-        // Allow very long sentences for detailed responses
-        if (short.length > 200) {
+        // Allow longer sentences for detailed responses
+        if (short.length > 150) {
           const parts = short.split(/[,;]/);
           if (parts.length > 1) {
             short = parts[0].trim();
@@ -612,8 +612,8 @@
         return short;
       });
       
-      // No sentence limit - allow full detailed responses
-      const finalSentences = shortSentences;
+      // Limit to 10 sentences for detailed but manageable responses
+      const finalSentences = shortSentences.slice(0, 10);
       
       // Join and clean up
       let result = finalSentences.join('. ').trim();
@@ -856,7 +856,7 @@
           default: responseLanguage = 'English'; break;
         }
         
-        const aiPrompt = `You are an expert travel agent assistant with extensive knowledge of global destinations, travel planning, and tourism industry insights. 
+        const aiPrompt = `You are a helpful travel agent assistant. 
         
         User Preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None set'}
         
@@ -869,33 +869,21 @@
         
         IMPORTANT: Respond in ${responseLanguage} language. If the user is speaking in ${responseLanguage}, you must respond in ${responseLanguage}.
         
-        Provide the most comprehensive, detailed, and thorough travel advice possible. Write extensive responses with no sentence limits - be as detailed as you can be.
+        Enhance the local response with detailed AI insights. Provide comprehensive information in 8-10 sentences.
         
-        Include ALL of the following in your response:
-        - Detailed destination information and highlights
-        - Specific pricing ranges and budget considerations
-        - Best times to visit with seasonal details
-        - Weather patterns and climate information
-        - Cultural insights and local customs
-        - Transportation options and logistics
-        - Accommodation recommendations with price ranges
-        - Dining suggestions and local cuisine
-        - Visa requirements and documentation
-        - Health considerations and vaccinations
-        - Safety tips and local laws
-        - Hidden gems and off-the-beaten-path attractions
-        - Multiple alternatives and options
-        - Step-by-step planning advice
-        - Insider tips and local knowledge
-        - Booking recommendations and timing
-        - Packing suggestions and requirements
-        - Language considerations and phrases
-        - Currency and payment methods
-        - Emergency contacts and resources
+        Include detailed information about:
+        - Destination highlights and attractions
+        - Pricing and budget considerations
+        - Best times to visit
+        - Weather and climate
+        - Transportation options
+        - Accommodation recommendations
+        - Local customs and culture
+        - Practical tips and advice
         
-        If user has preferences set, provide highly personalized suggestions with detailed explanations of why each option fits their profile and preferences.
+        If user has preferences set, provide personalized suggestions with explanations.
         
-        Be extremely thorough, comprehensive, and detailed in every aspect of your response. Provide the most complete travel advice possible.
+        Be friendly, detailed, and helpful. Provide the most useful travel advice possible.
         Use only plain text, no emojis or symbols, but preserve international characters for different languages.`;
         
         const response = await puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
