@@ -559,6 +559,10 @@
       // Remove extra whitespace and normalize
       let cleaned = text.replace(/\s+/g, ' ').trim();
       
+      // Remove emojis and special symbols
+      cleaned = cleaned.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+      cleaned = cleaned.replace(/[^\w\s.,!?;:()\-'"]/g, '');
+      
       // Remove common AI artifacts and formal language
       cleaned = cleaned.replace(/^(Here's|Here is|I'll|I will|Let me|Based on|According to|I can|I would|I'd)/gi, '');
       cleaned = cleaned.replace(/(\.|,|!|\?)\s*(Here's|Here is|I'll|I will|Let me|Based on|According to|I can|I would|I'd)/gi, '$1');
@@ -566,6 +570,10 @@
       // Remove redundant phrases
       cleaned = cleaned.replace(/\b(please note that|it's worth noting that|it's important to|keep in mind that|remember that)\b/gi, '');
       cleaned = cleaned.replace(/\b(in terms of|when it comes to|as far as|regarding|concerning)\b/gi, '');
+      
+      // Remove bullet points and list markers
+      cleaned = cleaned.replace(/^[\s•\-\*]+/gm, '');
+      cleaned = cleaned.replace(/^\d+\.\s*/gm, '');
       
       // Shorten long sentences by breaking at natural points
       const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 0);
@@ -599,6 +607,7 @@
       // Final cleanup
       result = result.replace(/\.+/g, '.');
       result = result.replace(/\s+/g, ' ');
+      result = result.replace(/\s+([.,!?])/g, '$1'); // Remove spaces before punctuation
       
       return result;
     }
@@ -702,15 +711,19 @@
       } else if (isAI) {
         indicator = '<span class="ai-indicator"><i class="fa-solid fa-robot"></i>AI</span>';
       }
+      
+      // Clean the text for display (remove any remaining emojis/symbols)
+      const cleanText = text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+      
       item.innerHTML = `
         <div class="conversation-label">${speaker === 'user' ? 'You' : 'AI Travel Agent'}${indicator}</div>
-        <div class="conversation-text">${text}</div>
+        <div class="conversation-text">${cleanText}</div>
       `;
       conversationContainer.appendChild(item);
       conversationContainer.scrollTop = conversationContainer.scrollHeight;
       
       // Store in history
-      conversationHistory.push({ speaker, text, timestamp: new Date(), isAI, isEnhanced });
+      conversationHistory.push({ speaker, text: cleanText, timestamp: new Date(), isAI, isEnhanced });
     }
 
     // Enhanced voice command processing with Puter.js AI
@@ -794,7 +807,8 @@
         
         Enhance the local response with additional AI insights. Keep it under 3 sentences. 
         Be friendly and provide practical tips. If the local response is good, build upon it.
-        If user has preferences set, tailor your recommendations accordingly.`;
+        If user has preferences set, tailor your recommendations accordingly.
+        IMPORTANT: Use only plain text, no emojis, symbols, or special characters.`;
         
         const response = await puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
         const cleanResponse = cleanAndShortenText(response.message.content[0].text);
