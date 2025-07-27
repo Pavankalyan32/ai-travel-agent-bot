@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
 
-  <script src="https://js.puter.com/v2/"></script>
   <script src="travel-agent-data.js"></script>
   <style>
     body, html {
@@ -504,7 +503,7 @@
     </button>
     
     <button class="ask-refresh-btn" id="testAiBtn" tabindex="0" style="margin-left:10px; background:linear-gradient(135deg, #10b981 0%, #059669 100%);">
-      <i class="fa-solid fa-robot" style="margin-right:6px;"></i> Test AI
+      <i class="fa-solid fa-robot" style="margin-right:6px;"></i> Test Ollama
     </button>
   </div>
 
@@ -676,58 +675,63 @@
     // Run test on page load
     testLanguagePreservation();
     
-    // Test Puter.js availability
+    // Test Ollama availability
     setTimeout(async () => {
-      console.log('=== PUTER.JS DEBUGGING ===');
-      console.log('Checking Puter.js availability...');
-      console.log('typeof puter:', typeof puter);
-      console.log('puter object:', puter);
-      console.log('puter.ai:', puter?.ai);
-      console.log('puter.ai.chat:', puter?.ai?.chat);
-      console.log('Script loaded from:', document.querySelector('script[src*="puter.com"]')?.src);
+      console.log('=== OLLAMA DEBUGGING ===');
+      console.log('Checking Ollama availability...');
       
-      // Test if puter.print exists (basic functionality)
-      if (typeof puter?.print === 'function') {
-        console.log('✅ puter.print is available');
-        try {
-          puter.print('Testing puter.print functionality...');
-        } catch (e) {
-          console.error('❌ puter.print failed:', e);
-        }
-      } else {
-        console.error('❌ puter.print is not available');
-      }
-      
-      if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
-        console.log('✅ Puter.js is available and ready');
-        
-        // Test Claude Sonnet 4 as recommended by Puter.js
-        try {
-          console.log('Testing Claude Sonnet 4 model');
-          
-          // First, test with the exact example from documentation
-          const basicTest = await puter.ai.chat("Explain quantum computing in simple terms", {model: 'claude-sonnet-4'});
-          console.log('✅ Basic test successful:', basicTest);
-          
-          const testResponse = await puter.ai.chat('Say "Hello, AI is working!"', {model: 'claude-sonnet-4'});
-          console.log('✅ Claude Sonnet 4 test successful:', testResponse);
-          
-          // Test Hindi response
-          const hindiTest = await puter.ai.chat('Respond in Hindi: "नमस्ते, AI काम कर रहा है!"', {model: 'claude-sonnet-4'});
-          console.log('✅ Hindi AI test successful:', hindiTest);
-        } catch (error) {
-          console.error('❌ Claude Sonnet 4 test failed:', error);
-          console.error('Error type:', typeof error);
-          console.error('Error keys:', Object.keys(error || {}));
-          console.error('Error message:', error?.message);
-          console.error('Error stack:', error?.stack);
-        }
-      } else {
-        console.error('❌ Puter.js is not available');
-        console.log('Available global objects:', Object.keys(window).filter(key => key.includes('puter')));
+      try {
+        const testResponse = await callOllamaAI('Say "Hello, Ollama is working!"', 'llama3.1:8b');
+        console.log('✅ Ollama test successful:', testResponse);
+      } catch (error) {
+        console.error('❌ Ollama test failed:', error);
+        console.log('Make sure Ollama is installed and running on localhost:11434');
+        console.log('Install Ollama from: https://ollama.ai/');
+        console.log('Then run: ollama pull llama3.1:8b');
       }
     }, 2000);
     
+    // Ollama AI integration function
+    async function callOllamaAI(prompt, model = 'llama3.1:8b') {
+      try {
+        console.log(`Calling Ollama with model: ${model}`);
+        console.log('Prompt:', prompt);
+        
+        const response = await fetch('http://localhost:11434/api/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: model,
+            prompt: prompt,
+            stream: false,
+            options: {
+              temperature: 0.7,
+              top_p: 0.9,
+              max_tokens: 500
+            }
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Ollama response:', data);
+        
+        if (data.response) {
+          return data.response;
+        } else {
+          throw new Error('No response from Ollama');
+        }
+      } catch (error) {
+        console.error('Ollama API error:', error);
+        throw error;
+      }
+    }
+
     // Enhanced local response function for when AI is not available
     function getEnhancedLocalResponse(input, lang) {
       const lowerInput = input.toLowerCase();
@@ -942,14 +946,8 @@
         }
       }
       
-      // Enhanced response system combining AI and local travel data
+      // Enhanced response system combining Ollama AI and local travel data
       try {
-        // Check if Puter.js is available and not rate limited
-        if (typeof puter === 'undefined' || !puter.ai || !puter.ai.chat) {
-          console.error('Puter.js not available, using enhanced local response');
-          return getEnhancedLocalResponse(input, currentLang);
-        }
-        
         // First, get local travel data response
         const localResponse = getTravelResponse(input, currentLang);
         
@@ -975,58 +973,51 @@
           default: responseLanguage = 'English'; break;
         }
         
-        const aiPrompt = `You are a travel agent assistant. User question: "${input}". Local response: "${localResponse}". 
+        const aiPrompt = `You are a helpful travel agent assistant. 
+
+User question: "${input}"
+Local travel response: "${localResponse}"
+User preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None'}
+
+Recent conversation:
+${recentHistory}
+
+Instructions: Respond in ${responseLanguage} language. Provide helpful travel advice in 5-8 sentences. Include destination info, pricing, best times to visit, and practical tips. Be friendly and detailed.`;
+
+        console.log('Sending Ollama prompt:', aiPrompt);
         
-        User preferences: ${preferencesContext.length > 0 ? preferencesContext.join(', ') : 'None'}
+        // Try different Ollama models
+        const models = ['llama3.1:8b', 'mistral:7b', 'llama3.1:3b', 'llama2:7b'];
+        let aiResponse = null;
         
-        Respond in ${responseLanguage} language. Provide helpful travel advice in 5-8 sentences. Include destination info, pricing, best times to visit, and practical tips. Be friendly and detailed.`;
-        
-        console.log('Sending AI prompt:', aiPrompt);
-        
-        // Add timeout to prevent hanging
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('AI request timeout')), 8000)
-        );
-        
-        // Use Claude Sonnet 4 as recommended by Puter.js documentation
-        console.log('Using Claude Sonnet 4 model');
-        const aiPromise = puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
-        const response = await Promise.race([aiPromise, timeoutPromise]);
-        
-        console.log('AI response received:', response);
-        console.log('Response type:', typeof response);
-        console.log('Response keys:', Object.keys(response || {}));
-        
-        if (response && response.message) {
-          console.log('Message keys:', Object.keys(response.message || {}));
-          if (response.message.content) {
-            console.log('Content length:', response.message.content.length);
-            console.log('First content item:', response.message.content[0]);
+        for (const model of models) {
+          try {
+            console.log(`Trying Ollama model: ${model}`);
+            aiResponse = await callOllamaAI(aiPrompt, model);
+            console.log(`✅ Success with Ollama model: ${model}`);
+            break;
+          } catch (modelError) {
+            console.log(`❌ Failed with Ollama model ${model}:`, modelError);
+            if (model === models[models.length - 1]) {
+              throw modelError; // Re-throw if all models fail
+            }
           }
         }
         
-        if (response && response.message && response.message.content && response.message.content[0] && response.message.content[0].text) {
-          const cleanResponse = cleanAndShortenText(response.message.content[0].text);
-          console.log('Cleaned response:', cleanResponse);
+        if (aiResponse) {
+          const cleanResponse = cleanAndShortenText(aiResponse);
+          console.log('Cleaned Ollama response:', cleanResponse);
           return cleanResponse;
         } else {
-          console.error('Invalid AI response structure:', response);
-          console.log('Falling back to enhanced local response');
-          return getEnhancedLocalResponse(input, currentLang);
+          throw new Error('No response from any Ollama model');
         }
-              } catch (error) {
-          console.error('AI response error:', error);
-          // Check if it's a usage limit error
-          if (error && error.error && error.error.message && error.error.message.includes('usage-limited')) {
-            console.log('Claude API usage limit reached, using enhanced local responses');
-            return getEnhancedLocalResponse(input, currentLang);
-          }
-          
-          // Fallback to enhanced local response
-          const fallbackResponse = getEnhancedLocalResponse(input, currentLang);
-          console.log('Using enhanced fallback response:', fallbackResponse);
-          return fallbackResponse;
-        }
+      } catch (error) {
+        console.error('Ollama AI response error:', error);
+        // Fallback to enhanced local response
+        const fallbackResponse = getEnhancedLocalResponse(input, currentLang);
+        console.log('Using enhanced fallback response:', fallbackResponse);
+        return fallbackResponse;
+      }
     }
 
     function clearConversation() {
@@ -1183,34 +1174,29 @@
       clearConversation();
     });
     
-    // Test AI button
+        // Test AI button
     const testAiBtn = document.getElementById('testAiBtn');
     testAiBtn.addEventListener('click', async () => {
-      console.log('Testing AI manually...');
-      addConversationItem('user', 'Testing AI connection...');
+      console.log('Testing Ollama AI manually...');
+      addConversationItem('user', 'Testing Ollama AI connection...');
       
       try {
-        if (typeof puter === 'undefined' || !puter.ai || !puter.ai.chat) {
-          addConversationItem('bot', '❌ Puter.js is not loaded. Please check your internet connection and refresh the page.');
-          return;
-        }
+        const testResponse = await callOllamaAI('Say "AI is working!" in one sentence.', 'llama3.1:8b');
+        console.log('Manual Ollama test response:', testResponse);
         
-        const testResponse = await puter.ai.chat('Say "AI is working!" in one sentence.', {model: 'claude-sonnet-4'});
-        console.log('Manual AI test response:', testResponse);
-        
-        if (testResponse && testResponse.message && testResponse.message.content && testResponse.message.content[0] && testResponse.message.content[0].text) {
-          addConversationItem('bot', `✅ AI Test Successful: ${testResponse.message.content[0].text}`, true, true);
+        if (testResponse) {
+          addConversationItem('bot', `✅ Ollama AI Test Successful: ${testResponse}`, true, true);
         } else {
-          addConversationItem('bot', '❌ AI responded but with invalid structure. Check console for details.');
+          addConversationItem('bot', '❌ Ollama responded but with empty response.');
         }
-              } catch (error) {
-          console.error('Manual AI test failed:', error);
-          console.error('Error type:', typeof error);
-          console.error('Error keys:', Object.keys(error || {}));
-          console.error('Error message:', error?.message);
-          console.error('Error stack:', error?.stack);
-          addConversationItem('bot', `❌ AI Test Failed: ${error.message || 'Unknown error'}`);
-        }
+      } catch (error) {
+        console.error('Manual Ollama test failed:', error);
+        console.error('Error type:', typeof error);
+        console.error('Error keys:', Object.keys(error || {}));
+        console.error('Error message:', error?.message);
+        console.error('Error stack:', error?.stack);
+        addConversationItem('bot', `❌ Ollama Test Failed: ${error.message || 'Unknown error'}. Make sure Ollama is running on localhost:11434`);
+      }
     });
 
     // Event listeners for accessibility
