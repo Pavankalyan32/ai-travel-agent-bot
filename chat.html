@@ -556,15 +556,14 @@
     function cleanTextForSpeech(text) {
       if (!text) return '';
       
-      // Remove emojis and special symbols
+      // Remove emojis and special symbols but preserve international characters
       let cleaned = text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
-      cleaned = cleaned.replace(/[^\w\s.,!?;:()\-'"]/g, '');
       
       // Remove bullet points and list markers
       cleaned = cleaned.replace(/^[\s•\-\*]+/gm, '');
       cleaned = cleaned.replace(/^\d+\.\s*/gm, '');
       
-      // Clean up spacing
+      // Clean up spacing but preserve international characters
       cleaned = cleaned.replace(/\s+/g, ' ');
       cleaned = cleaned.replace(/\s+([.,!?])/g, '$1');
       
@@ -578,9 +577,8 @@
       // Remove extra whitespace and normalize
       let cleaned = text.replace(/\s+/g, ' ').trim();
       
-      // Remove emojis and special symbols
+      // Remove emojis and special symbols but preserve international characters
       cleaned = cleaned.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
-      cleaned = cleaned.replace(/[^\w\s.,!?;:()\-'"]/g, '');
       
       // Remove common AI artifacts and formal language
       cleaned = cleaned.replace(/^(Here's|Here is|I'll|I will|Let me|Based on|According to|I can|I would|I'd)/gi, '');
@@ -654,6 +652,25 @@
     // Update data every 30 seconds
     setInterval(updateRealtimeData, 30000);
     updateRealtimeData();
+    
+    // Test function to verify language preservation
+    function testLanguagePreservation() {
+      const testTexts = {
+        'Hindi': 'नमस्ते! मैं आपका व्यक्तिगत ट्रैवल एजेंट हूं।',
+        'Russian': 'Привет! Я ваш персональный туристический агент.',
+        'Japanese': 'こんにちは！私はあなたのパーソナル旅行代理店です。',
+        'English': 'Hello! I am your personal travel agent.'
+      };
+      
+      console.log('Testing language preservation:');
+      Object.entries(testTexts).forEach(([lang, text]) => {
+        const cleaned = cleanTextForSpeech(text);
+        console.log(`${lang}: ${cleaned}`);
+      });
+    }
+    
+    // Run test on page load
+    testLanguagePreservation();
     
     // Function to update user profile display
     function updateUserProfile() {
@@ -827,7 +844,7 @@
         Enhance the local response with additional AI insights. Keep it under 3 sentences. 
         Be friendly and provide practical tips. If the local response is good, build upon it.
         If user has preferences set, tailor your recommendations accordingly.
-        IMPORTANT: Use only plain text, no emojis, symbols, or special characters.`;
+        IMPORTANT: Use only plain text, no emojis or symbols, but preserve international characters for different languages.`;
         
         const response = await puter.ai.chat(aiPrompt, {model: 'claude-sonnet-4'});
         const cleanResponse = cleanAndShortenText(response.message.content[0].text);
